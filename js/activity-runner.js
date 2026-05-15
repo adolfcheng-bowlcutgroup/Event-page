@@ -121,11 +121,15 @@ export function renderActivities() {
       : `<div class="vip-empty">目前尚無 VIP 專屬活動。</div>`
   );
 
-  $("#activityDetail").addClass("hidden").empty();
+  $("#activityDetail, #vipActivityDetail").addClass("hidden").empty();
 }
 
 function isVipExclusiveActivity(activity) {
   return activity.type === "benefit" || activity.requiredVip === "VIP2" || activity.requiredVip === "VIP3";
+}
+
+function getCurrentDetailContainer(activity) {
+  return isVipExclusiveActivity(activity) ? $("#vipActivityDetail") : $("#activityDetail");
 }
 
 function renderActivityCards(list) {
@@ -192,8 +196,11 @@ export function bindActivityEvents() {
     const activity = activitiesRef.find(item => item.id === id);
     if (!activity) return;
 
+    const detail = getCurrentDetailContainer(activity);
+    $("#activityDetail, #vipActivityDetail").addClass("hidden").empty();
+
     if (activity.type === "benefit") {
-      $("#activityDetail").removeClass("hidden").html(`
+      detail.removeClass("hidden").html(`
         <div class="section-title">
           <div>
             <h2>${activity.title}</h2>
@@ -202,19 +209,19 @@ export function bindActivityEvents() {
         </div>
         ${activity.benefitHtml || ""}
         <div class="activity-actions">
-          <button class="btn btn-secondary" id="closeActivityDetail" type="button">返回活動列表</button>
+          <button class="btn btn-secondary close-activity-detail" type="button">返回</button>
         </div>
       `);
       return;
     }
 
     const context = buildActivityContext(activity);
-    $("#activityDetail").removeClass("hidden").empty();
-    activity.render($("#activityDetail")[0], context);
+    detail.removeClass("hidden").empty();
+    activity.render(detail[0], context);
   });
 
-  $(document).on("click", "#closeActivityDetail", function () {
-    $("#activityDetail").addClass("hidden").empty();
+  $(document).on("click", "#closeActivityDetail, .close-activity-detail", function () {
+    $("#activityDetail, #vipActivityDetail").addClass("hidden").empty();
   });
 }
 
@@ -230,7 +237,7 @@ export function buildActivityContext(activity) {
       return result;
     },
     close() {
-      $("#activityDetail").addClass("hidden").empty();
+      $("#activityDetail, #vipActivityDetail").addClass("hidden").empty();
       renderActivities();
     }
   };

@@ -67,13 +67,22 @@ function renderRewards() {
 function bindTabs() {
   $(document).on("click", ".tab-btn", function () {
     const tab = $(this).data("tab");
-    $(".tab-btn").removeClass("active");
-    $(this).addClass("active");
+
+    $(".tab-btn")
+      .removeClass("active")
+      .attr("aria-selected", "false");
+
+    $(this)
+      .addClass("active")
+      .attr("aria-selected", "true");
+
     $(".tab-panel").addClass("hidden");
     $(`#${tab}Tab`).removeClass("hidden");
 
+    $("#activityDetail, #vipActivityDetail").addClass("hidden").empty();
+
     if (tab === "backend") renderBackend();
-    if (tab === "activities") renderActivities();
+    if (tab === "activities" || tab === "vip") renderActivities();
   });
 }
 

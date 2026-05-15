@@ -73,17 +73,17 @@
       </aside>
 
       <section class="panel">
-        <div class="tabs">
-          <button class="btn btn-secondary tab-btn active" data-tab="activities" type="button">活動</button>
-          <button class="btn btn-secondary tab-btn" data-tab="vip" type="button">VIP專屬</button>
-          <button id="backendTabButton" class="btn btn-secondary tab-btn" data-tab="backend" type="button">我的後台</button>
+        <div class="tabs" role="tablist" aria-label="會員功能切換">
+          <button class="btn btn-secondary tab-btn active" data-tab="activities" type="button" role="tab" aria-selected="true">活動</button>
+          <button class="btn btn-secondary tab-btn" data-tab="vip" type="button" role="tab" aria-selected="false">VIP專屬</button>
+          <button id="backendTabButton" class="btn btn-secondary tab-btn" data-tab="backend" type="button" role="tab" aria-selected="false">我的後台</button>
         </div>
 
         <div id="activitiesTab" class="tab-panel">
           <div class="section-title">
             <div>
-              <h2>我的活動</h2>
-              <p>依 VIP 權限與參加狀態顯示可參加內容</p>
+              <h2>活動</h2>
+              <p>問卷、小遊戲與可累積積分的活動</p>
             </div>
           </div>
           <div id="activityGrid" class="activity-list"></div>
@@ -98,6 +98,7 @@
             </div>
           </div>
           <div id="vipActivityGrid" class="activity-list vip-list"></div>
+          <div id="vipActivityDetail" class="activity-detail hidden"></div>
         </div>
 
         <div id="backendTab" class="tab-panel hidden">

@@ -79,4 +79,4 @@ admins/{管理員信箱小寫}
 
 ## 版面說明
 
-活動頁目前分為「一般活動」與「VIP專屬區域」。`type: "benefit"`、`requiredVip: "VIP2"` 或 `requiredVip: "VIP3"` 的活動會自動顯示在右側 VIP 專屬區域。
+上方主切換為「活動」「VIP專屬」「我的後台 / 簡易後台」。三個按鈕都在同一個頁面、同一個內容區塊內切換，不做頁面跳轉。`type: "benefit"`、`requiredVip: "VIP2"` 或 `requiredVip: "VIP3"` 的活動會自動顯示在「VIP專屬」分頁。
