@@ -1,8 +1,8 @@
-import { spinGameActivity } from "../activities/spin-game/index.js";
-import { auraGameActivity } from "../activities/aura-game/index.js";
-import { psychicControlGameActivity } from "../activities/psychic-control-game/index.js";
-import { hunterKaohsiungSurveyActivity } from "../activities/hunter-kaohsiung-survey/index.js";
-import { simpleSurveyActivity } from "./activity-runner.js";
+import { spinGameActivity } from "../activities/spin-game/index.js?v8";
+import { auraGameActivity } from "../activities/aura-game/index.js?v8";
+import { psychicControlGameActivity } from "../activities/psychic-control-game/index.js?v8";
+import { hunterKaohsiungSurveyActivity } from "../activities/hunter-kaohsiung-survey/index.js?v8";
+import { simpleSurveyActivity } from "./activity-runner.js?v8";
 
 export const activities = [
   simpleSurveyActivity,

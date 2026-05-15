@@ -3,7 +3,7 @@ import {
   addDoc,
   collection,
   serverTimestamp
-} from "../../js/firebase.js";
+} from "../../js/firebase.js?v8";
 
 export const hunterKaohsiungSurveyActivity = {
   id: "hunter-kaohsiung-survey",

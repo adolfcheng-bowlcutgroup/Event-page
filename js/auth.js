@@ -4,16 +4,16 @@ import {
   signInWithPopup,
   signOut,
   onAuthStateChanged
-} from "./firebase.js";
+} from "./firebase.js?v8";
 import {
   state,
   upsertUserProfile,
   loadRewards,
   loadParticipations
-} from "./user.js";
-import { renderAppShell } from "./app.js";
-import { renderActivities } from "./activity-runner.js";
-import { renderBackend } from "./admin.js";
+} from "./user.js?v8";
+import { renderAppShell } from "./app.js?v8";
+import { renderActivities } from "./activity-runner.js?v8";
+import { renderBackend } from "./admin.js?v8";
 
 export function bindAuth() {
   $("#loginBtn").on("click", async () => {

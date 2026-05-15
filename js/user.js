@@ -1,4 +1,4 @@
-import { applyAutoTags } from "./tags.js";
+import { applyAutoTags } from "./tags.js?v8";
 
 import {
   db,
@@ -12,7 +12,7 @@ import {
   where,
   getDocs,
   limit
-} from "./firebase.js";
+} from "./firebase.js?v8";
 
 export const state = {
   currentUser: null,

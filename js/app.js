@@ -1,18 +1,18 @@
-import { bindAuth } from "./auth.js";
+import { bindAuth } from "./auth.js?v8";
 import {
   state,
   roleLabel,
   getNextVipInfo,
   getVipClass,
   canAccess
-} from "./user.js";
-import { activities } from "./activity-registry.js";
+} from "./user.js?v8";
+import { activities } from "./activity-registry.js?v8";
 import {
   setActivities,
   renderActivities,
   bindActivityEvents
-} from "./activity-runner.js";
-import { renderBackend } from "./admin.js";
+} from "./activity-runner.js?v8";
+import { renderBackend } from "./admin.js?v8";
 
 setActivities(activities);
 

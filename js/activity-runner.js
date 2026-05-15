@@ -3,7 +3,7 @@ import {
   addDoc,
   collection,
   serverTimestamp
-} from "./firebase.js";
+} from "./firebase.js?v8";
 import {
   state,
   canAccess,
@@ -11,8 +11,8 @@ import {
   hasParticipated,
   completeActivity,
   createCode
-} from "./user.js";
-import { renderAppShell } from "./app.js";
+} from "./user.js?v8";
+import { renderAppShell } from "./app.js?v8";
 
 let activitiesRef = [];
 

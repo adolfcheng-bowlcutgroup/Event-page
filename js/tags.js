@@ -9,7 +9,7 @@ import {
   getDocs,
   limit,
   arrayUnion
-} from "./firebase.js";
+} from "./firebase.js?v8";
 
 function normalizeTagId(value) {
   return String(value || "")

@@ -127,3 +127,22 @@ activities/psychic-control-game/
 - 通關 +10 點
 - 失敗不加點、不記為已參加，可重新挑戰
 - 通關後會寫入活動完成紀錄，活動顯示已參加
+
+## v8 檢查修正版
+
+本版確認 `超能100！靈力控制挑戰` 已在 `js/activity-registry.js` 註冊，並加入到 `activities` 陣列。
+
+另外為避免 GitHub Pages / 瀏覽器快取舊版 module，已在 `index.html` 與本地 ES module import 加上版本參數：
+
+```text
+?v8
+```
+
+若部署後仍沒看到新活動，請確認 GitHub repo 內存在：
+
+```text
+activities/psychic-control-game/index.js
+activities/psychic-control-game/style.css
+```
+
+並用無痕視窗或網址加上 `?v8` 重新載入。

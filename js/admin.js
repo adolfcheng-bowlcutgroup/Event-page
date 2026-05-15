@@ -5,14 +5,14 @@ import {
   where,
   getDocs,
   limit
-} from "./firebase.js";
+} from "./firebase.js?v8";
 import {
   state,
   formatDateFromTimestamp,
   sortByCreatedAtDesc
-} from "./user.js";
-import { loadUserTags } from "./tags.js";
-import { activities } from "./activity-registry.js";
+} from "./user.js?v8";
+import { loadUserTags } from "./tags.js?v8";
+import { activities } from "./activity-registry.js?v8";
 
 export function renderBackend() {
   if (!state.currentProfile) return;
