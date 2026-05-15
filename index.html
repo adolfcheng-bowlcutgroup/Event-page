@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VIP 活動會員中心 v1</title>
+  <title>VIP 活動會員中心 v2</title>
 
   <!-- jQuery：主要用於簡化 DOM 操作與事件綁定 -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -668,7 +668,7 @@
           <button class="btn btn-secondary tab-btn active" data-tab="activities" type="button">活動</button>
           <button class="btn btn-secondary tab-btn" data-tab="questionnaire" type="button">問卷</button>
           <button class="btn btn-secondary tab-btn" data-tab="game" type="button">小遊戲</button>
-          <button class="btn btn-secondary tab-btn" data-tab="admin" type="button">簡易後台</button>
+          <button id="adminTabButton" class="btn btn-secondary tab-btn hidden" data-tab="admin" type="button">簡易後台</button>
         </div>
 
         <div id="activitiesTab" class="tab-panel">
@@ -840,50 +840,70 @@
     // 正式版建議改由 Firestore campaigns collection 控制
     // =====================================================
     const vipRank = {
-      Normal: 1,
-      Silver: 2,
-      Gold: 3
+      VIP1: 1,
+      VIP2: 2,
+      VIP3: 3
     };
+
+    const roleLabel = {
+      admin: "管理員",
+      member: "會員"
+    };
+
+    function getVipLevelByPoints(points = 0) {
+      if (points >= 30) return "VIP3"; // VIP1 -> VIP2 需 10 點，VIP2 -> VIP3 再需 20 點，合計 30 點
+      if (points >= 10) return "VIP2";
+      return "VIP1";
+    }
+
+    function getNextVipInfo(points = 0) {
+      if (points < 10) return { nextLevel: "VIP2", need: 10 - points };
+      if (points < 30) return { nextLevel: "VIP3", need: 30 - points };
+      return { nextLevel: null, need: 0 };
+    }
 
     const activities = [
       {
         id: "survey-serial",
         icon: "📝",
         title: "填問卷送序號",
-        desc: "完成 1 分鐘問卷，即可獲得專屬活動序號。",
-        requiredVip: "Normal",
-        tab: "questionnaire"
+        desc: "完成 1 分鐘問卷，可獲得 10 點積分與專屬活動序號。",
+        requiredVip: "VIP1",
+        tab: "questionnaire",
+        points: 10
       },
       {
         id: "spin-discount",
         icon: "🎮",
         title: "玩小遊戲送折扣",
-        desc: "挑戰轉盤遊戲，依 VIP 等級獲得不同折扣碼。",
-        requiredVip: "Normal",
-        tab: "game"
+        desc: "挑戰轉盤遊戲，可獲得 5 點積分與折扣碼。",
+        requiredVip: "VIP1",
+        tab: "game",
+        points: 5
       },
       {
-        id: "vip-gold-draw",
-        icon: "👑",
-        title: "VIP Gold 限定抽獎",
-        desc: "Gold 會員可參加限定抽獎。MVP 先展示權限鎖定效果。",
-        requiredVip: "Gold",
-        tab: "activities"
-      },
-      {
-        id: "silver-fastpass",
+        id: "vip2-fastpass",
         icon: "⚡",
-        title: "Silver 以上快速通關",
-        desc: "Silver 以上會員可在線下活動兌換快速通關 QR Code。",
-        requiredVip: "Silver",
-        tab: "activities"
+        title: "VIP2 快速通關",
+        desc: "累積 10 點成為 VIP2 後，可解鎖線下活動快速通關權益。",
+        requiredVip: "VIP2",
+        tab: "activities",
+        points: 0
+      },
+      {
+        id: "vip3-draw",
+        icon: "👑",
+        title: "VIP3 限定抽獎",
+        desc: "累積 30 點成為 VIP3 後，可參加最高等級會員限定抽獎。",
+        requiredVip: "VIP3",
+        tab: "activities",
+        points: 0
       }
     ];
 
-    // Demo 白名單：正式版請移到 Firestore vips/{emailKey}
-    const localVipWhitelist = {
-      "gold@example.com": "Gold",
-      "silver@example.com": "Silver"
+    // Demo 管理員白名單：正式版請移到 Firestore admins/{emailKey}
+    const localAdminWhitelist = {
+      "admin@example.com": true
     };
 
     let currentUser = null;
@@ -910,26 +930,31 @@
       return vipRank[userVip] >= vipRank[requiredVip];
     }
 
-    async function resolveVipLevel(user) {
+    async function resolveUserRole(user) {
       const emailKey = getEmailKey(user.email);
 
-      // 1. 先查 Firestore VIP 白名單：vips/{email}
-      const vipRef = doc(db, "vips", emailKey);
-      const vipSnap = await getDoc(vipRef);
-      if (vipSnap.exists() && vipSnap.data().vipLevel) {
-        return vipSnap.data().vipLevel;
+      // 1. 先查 Firestore 管理員白名單：admins/{email}
+      const adminRef = doc(db, "admins", emailKey);
+      const adminSnap = await getDoc(adminRef);
+      if (adminSnap.exists() && adminSnap.data().role === "admin") {
+        return "admin";
       }
 
       // 2. Demo fallback：本機假資料
-      return localVipWhitelist[emailKey] || "Normal";
+      if (localAdminWhitelist[emailKey]) return "admin";
+
+      return "member";
     }
 
     async function upsertUserProfile(user) {
       const emailKey = getEmailKey(user.email);
-      const vipLevel = await resolveVipLevel(user);
+      const role = await resolveUserRole(user);
 
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
+      const existingData = userSnap.exists() ? userSnap.data() : {};
+      const points = Number(existingData.points || 0);
+      const vipLevel = getVipLevelByPoints(points);
 
       const baseProfile = {
         uid: user.uid,
@@ -937,6 +962,8 @@
         emailKey,
         displayName: user.displayName || "未命名會員",
         photoURL: user.photoURL || "",
+        role,
+        points,
         vipLevel,
         sourceEvent: getSourceEvent(),
         lastLoginAt: serverTimestamp()
@@ -974,6 +1001,37 @@
       });
     }
 
+    async function addUserPoints(pointsToAdd, reason) {
+      if (!currentUser || !currentProfile) return null;
+
+      const oldPoints = Number(currentProfile.points || 0);
+      const newPoints = oldPoints + pointsToAdd;
+      const newVipLevel = getVipLevelByPoints(newPoints);
+
+      await setDoc(doc(db, "users", currentUser.uid), {
+        points: newPoints,
+        vipLevel: newVipLevel,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+
+      await addDoc(collection(db, "pointLogs"), {
+        userId: currentUser.uid,
+        email: currentUser.email,
+        points: pointsToAdd,
+        reason,
+        beforePoints: oldPoints,
+        afterPoints: newPoints,
+        beforeVipLevel: currentProfile.vipLevel,
+        afterVipLevel: newVipLevel,
+        sourceEvent: getSourceEvent(),
+        createdAt: serverTimestamp()
+      });
+
+      currentProfile.points = newPoints;
+      currentProfile.vipLevel = newVipLevel;
+      return { oldPoints, newPoints, newVipLevel };
+    }
+
     async function createReward({ type, title, code }) {
       if (!currentUser || !currentProfile) return;
 
@@ -981,6 +1039,7 @@
         userId: currentUser.uid,
         email: currentUser.email,
         vipLevel: currentProfile.vipLevel,
+        pointsAtIssue: currentProfile.points || 0,
         type,
         title,
         code,
@@ -992,6 +1051,7 @@
       currentRewards = await loadRewards(currentUser.uid);
       renderRewards();
       renderProfile();
+      renderActivities();
       renderAdminPreview();
     }
 
@@ -1004,7 +1064,17 @@
       $("#navName").text(currentProfile.displayName);
       $("#profileName").text(currentProfile.displayName);
       $("#profileEmail").text(currentProfile.email);
-      $("#vipBadge").text(`VIP ${currentProfile.vipLevel}`);
+      const nextInfo = getNextVipInfo(Number(currentProfile.points || 0));
+      const roleText = roleLabel[currentProfile.role || "member"] || "會員";
+      const nextText = nextInfo.nextLevel ? `｜距離 ${nextInfo.nextLevel} 還差 ${nextInfo.need} 點` : "｜已達最高等級";
+      $("#vipBadge").text(`${roleText}｜${currentProfile.vipLevel}｜${currentProfile.points || 0} 點${nextText}`);
+
+      if (currentProfile.role === "admin") {
+        $("#adminTabButton").removeClass("hidden");
+      } else {
+        $("#adminTabButton").addClass("hidden");
+        if (!$("#adminTab").hasClass("hidden")) switchTab("activities");
+      }
 
       const available = activities.filter(a => canAccess(currentProfile.vipLevel, a.requiredVip)).length;
       $("#availableCount").text(available);
@@ -1186,6 +1256,7 @@
           updatedAt: serverTimestamp()
         }, { merge: true });
 
+        const pointResult = await addUserPoints(10, "完成問卷");
         const code = createCode("SERIAL");
         await createReward({
           type: "serial",
@@ -1194,7 +1265,7 @@
         });
         await logActivity("survey", "completed", { rewardCode: code });
 
-        alert(`問卷完成！你的序號是：${code}`);
+        alert(`問卷完成！獲得 10 點積分，目前 ${pointResult.newVipLevel}，總積分 ${pointResult.newPoints} 點。你的序號是：${code}`);
         this.reset();
         switchTab("activities");
       } catch (error) {
@@ -1214,10 +1285,11 @@
 
       setTimeout(async () => {
         let discount = "95OFF";
-        if (currentProfile.vipLevel === "Gold") discount = Math.random() > 0.35 ? "85OFF" : "90OFF";
-        if (currentProfile.vipLevel === "Silver") discount = Math.random() > 0.45 ? "90OFF" : "95OFF";
-        if (currentProfile.vipLevel === "Normal") discount = Math.random() > 0.75 ? "90OFF" : "95OFF";
+        if (currentProfile.vipLevel === "VIP3") discount = Math.random() > 0.35 ? "85OFF" : "90OFF";
+        if (currentProfile.vipLevel === "VIP2") discount = Math.random() > 0.45 ? "90OFF" : "95OFF";
+        if (currentProfile.vipLevel === "VIP1") discount = Math.random() > 0.75 ? "90OFF" : "95OFF";
 
+        const pointResult = await addUserPoints(5, "參與小遊戲");
         const code = createCode(discount);
         try {
           await createReward({
@@ -1226,7 +1298,7 @@
             code
           });
           await logActivity("spin_game", "completed", { rewardCode: code, discount });
-          $("#gameResult").text(`恭喜獲得折扣碼：${code}`);
+          $("#gameResult").text(`恭喜獲得 5 點積分，目前 ${pointResult.newVipLevel}，總積分 ${pointResult.newPoints} 點。折扣碼：${code}`);
         } catch (error) {
           alert(`建立折扣碼失敗：${error.message}`);
         } finally {
