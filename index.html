@@ -957,14 +957,21 @@
     }
 
     async function loadRewards(userId) {
+      // MVP 版先避免使用 where + orderBy 的複合查詢，否則 Firestore 需要額外建立 composite index。
+      // 正式版可改回 orderBy("createdAt", "desc")，並依 Firebase 提示建立索引。
       const q = query(
         collection(db, "rewards"),
         where("userId", "==", userId),
-        orderBy("createdAt", "desc"),
         limit(20)
       );
       const snap = await getDocs(q);
-      return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const rewards = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      return rewards.sort((a, b) => {
+        const aTime = a.createdAt?.seconds || 0;
+        const bTime = b.createdAt?.seconds || 0;
+        return bTime - aTime;
+      });
     }
 
     async function createReward({ type, title, code }) {
