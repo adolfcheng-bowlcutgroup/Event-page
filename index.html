@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VIP 活動會員中心 v4</title>
+  <title>VIP 活動會員中心 v3</title>
 
   <!-- jQuery：主要用於簡化 DOM 操作與事件綁定 -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -283,9 +283,37 @@
       padding: 8px 12px;
       font-weight: 900;
       font-size: 13px;
+      margin: 6px 0 12px;
+      border: 1px solid transparent;
+    }
+
+    .vip-chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 900;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .vip-level-VIP1 {
+      color: #bfdbfe;
+      background: rgba(59, 130, 246, 0.18);
+      border-color: rgba(59, 130, 246, 0.36);
+    }
+
+    .vip-level-VIP2 {
+      color: #ddd6fe;
+      background: rgba(124, 58, 237, 0.22);
+      border-color: rgba(124, 58, 237, 0.42);
+    }
+
+    .vip-level-VIP3 {
       color: #111827;
       background: linear-gradient(135deg, #fde68a, #f59e0b);
-      margin: 6px 0 12px;
+      border-color: rgba(245, 158, 11, 0.55);
     }
 
     .stat-grid {
@@ -917,13 +945,17 @@
           <div class="section-title">
             <div>
               <h2 id="recordsTitle">我的後台</h2>
-              <p id="recordsDescription">查看你的會員資料、活動紀錄、積分紀錄與獎勵。</p>
+              <p id="recordsDescription">查看你的基本會員資料。</p>
             </div>
           </div>
 
           <div class="backend-actions">
             <button id="reloadRecordsBtn" class="btn btn-primary" type="button">重新載入資料</button>
-            <button id="exportRecordsBtn" class="btn btn-secondary" type="button">匯出目前資料 CSV</button>
+          </div>
+
+          <div id="adminSearchBox" class="backend-actions hidden">
+            <input id="adminMemberEmailInput" placeholder="輸入會員 Gmail，例如 user@gmail.com" />
+            <button id="searchMemberBtn" class="btn btn-primary" type="button">查詢會員</button>
           </div>
 
           <div id="backendSummary" class="backend-grid"></div>
@@ -1095,6 +1127,11 @@
 
     function canAccess(userVip, requiredVip) {
       return vipRank[userVip] >= vipRank[requiredVip];
+    }
+
+    function vipBadgeHtml(level) {
+      const safeLevel = escapeHtml(level || "VIP1");
+      return `<span class="vip-chip vip-level-${safeLevel}">${safeLevel}</span>`;
     }
 
     function escapeHtml(value) {
@@ -1308,7 +1345,10 @@
       const nextInfo = getNextVipInfo(Number(currentProfile.points || 0));
       const roleText = roleLabel[currentProfile.role || "member"] || "會員";
       const nextText = nextInfo.nextLevel ? `｜距離 ${nextInfo.nextLevel} 還差 ${nextInfo.need} 點` : "｜已達最高等級";
-      $("#vipBadge").text(`${roleText}｜${currentProfile.vipLevel}｜${currentProfile.points || 0} 點${nextText}`);
+      $("#vipBadge")
+        .removeClass("vip-level-VIP1 vip-level-VIP2 vip-level-VIP3")
+        .addClass(`vip-level-${currentProfile.vipLevel}`)
+        .text(`${roleText}｜${currentProfile.vipLevel}｜${currentProfile.points || 0} 點${nextText}`);
 
       const available = activities.filter(a => canAccess(currentProfile.vipLevel, a.requiredVip)).length;
       $("#availableCount").text(available);
@@ -1317,11 +1357,13 @@
       if (currentProfile.role === "admin") {
         $("#recordsTabButton").text("簡易後台");
         $("#recordsTitle").text("簡易後台");
-        $("#recordsDescription").text("管理員可查看會員、問卷、獎勵、活動與積分紀錄，並匯出 CSV。");
+        $("#recordsDescription").text("用會員 Gmail 查詢會員基本資料與已參加活動。");
+        $("#adminSearchBox").removeClass("hidden");
       } else {
         $("#recordsTabButton").text("我的後台");
         $("#recordsTitle").text("我的後台");
-        $("#recordsDescription").text("查看你的會員資料、活動紀錄、積分紀錄與獎勵。");
+        $("#recordsDescription").text("查看你的基本會員資料。");
+        $("#adminSearchBox").addClass("hidden");
       }
     }
 
@@ -1359,11 +1401,11 @@
         statusClass = "done";
       }
       if (activity.informationalOnly && allowed) {
-        statusText = "已解鎖";
-        statusClass = "done";
+        statusText = "資格不符";
+        statusClass = "locked-tag";
       }
 
-      const buttonText = activity.informationalOnly ? "權益已顯示" : completed && !repeatable ? "已參加" : locked ? "權限不足" : "開始";
+      const buttonText = activity.informationalOnly ? "資格不符" : completed && !repeatable ? "已參加" : locked ? "權限不足" : "開始";
 
       return `
         <article class="activity-row ${locked ? "locked" : ""} ${completed ? "completed" : ""}">
@@ -1371,7 +1413,7 @@
           <div class="activity-copy">
             <h3>${escapeHtml(activity.title)}</h3>
             <p>${escapeHtml(activity.desc)}</p>
-            <span class="status-tag ${statusClass}">需 ${activity.requiredVip}｜${statusText}${repeatable ? "｜可重複參加" : ""}</span>
+            <span class="status-tag ${statusClass}">需 ${vipBadgeHtml(activity.requiredVip)}｜${statusText}${repeatable ? "｜可重複參加" : ""}</span>
           </div>
           <button
             class="btn ${disabled ? "btn-secondary" : "btn-primary"} activity-start"
@@ -1417,12 +1459,16 @@
     }
 
     function renderSummaryCards(items) {
-      $("#backendSummary").html(items.map(item => `
-        <div class="backend-card">
-          <strong>${escapeHtml(item.value)}</strong>
-          <span>${escapeHtml(item.label)}</span>
-        </div>
-      `).join(""));
+      $("#backendSummary").html(items.map(item => {
+        const value = String(item.value ?? "");
+        const valueHtml = value === "VIP1" || value === "VIP2" || value === "VIP3" ? vipBadgeHtml(value) : escapeHtml(value);
+        return `
+          <div class="backend-card">
+            <strong>${valueHtml}</strong>
+            <span>${escapeHtml(item.label)}</span>
+          </div>
+        `;
+      }).join(""));
     }
 
     function renderTable(title, rows, columns) {
@@ -1444,7 +1490,12 @@
               </thead>
               <tbody>
                 ${rows.map(row => `
-                  <tr>${columns.map(col => `<td>${escapeHtml(col.format ? col.format(row[col.key], row) : row[col.key])}</td>`).join("")}</tr>
+                  <tr>${columns.map(col => {
+                    const rawValue = col.format ? col.format(row[col.key], row) : row[col.key];
+                    const cellValue = String(rawValue ?? "");
+                    const shouldBadge = col.key === "vipLevel" || col.key === "afterVipLevel" || cellValue === "VIP1" || cellValue === "VIP2" || cellValue === "VIP3";
+                    return `<td>${shouldBadge ? vipBadgeHtml(cellValue) : escapeHtml(cellValue)}</td>`;
+                  }).join("")}</tr>
                 `).join("")}
               </tbody>
             </table>
@@ -1466,72 +1517,98 @@
       }
     }
 
-    async function renderAdminRecords() {
-      const data = await loadAdminData();
-      const totalPoints = data.users.reduce((sum, user) => sum + Number(user.points || 0), 0);
+    async function findMemberByEmail(email) {
+      const emailKey = getEmailKey(email);
+      if (!emailKey) return null;
+
+      let userRows = [];
+      const q1 = query(collection(db, "users"), where("emailKey", "==", emailKey), limit(1));
+      const snap1 = await getDocs(q1);
+      userRows = snap1.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      if (!userRows.length) {
+        const q2 = query(collection(db, "users"), where("email", "==", emailKey), limit(1));
+        const snap2 = await getDocs(q2);
+        userRows = snap2.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      }
+
+      if (!userRows.length) return null;
+      const member = userRows[0];
+      const userId = member.uid || member.id;
+      const activities = await loadCollectionByUser("activityLogs", userId, 50);
+      return { member, activities };
+    }
+
+    function renderAdminSearchResult(result) {
+      if (!result) {
+        renderSummaryCards([]);
+        $("#backendContent").html(`<div class="empty-state">查無此會員。請確認 Gmail 是否正確，或該會員是否曾登入過。</div>`);
+        return;
+      }
+
+      const member = result.member;
+      const completedActivities = result.activities.filter(log => log.status === "completed");
       renderSummaryCards([
-        { label: "會員數", value: data.users.length },
-        { label: "問卷數", value: data.surveys.length },
-        { label: "獎勵數", value: data.rewards.length },
-        { label: "活動紀錄", value: data.activityLogs.length },
-        { label: "積分紀錄", value: data.pointLogs.length },
-        { label: "總累積積分", value: totalPoints }
+        { label: "會員 Email", value: member.email || "-" },
+        { label: "目前 VIP", value: member.vipLevel || "VIP1" },
+        { label: "目前積分", value: member.points || 0 },
+        { label: "已參加活動", value: completedActivities.length }
       ]);
 
+      const profileRows = [{
+        email: member.email || "-",
+        displayName: member.displayName || "-",
+        role: roleLabel[member.role] || member.role || "會員",
+        vipLevel: member.vipLevel || "VIP1",
+        points: member.points || 0,
+        sourceEvent: member.sourceEvent || "-",
+        lastLoginAt: formatTime(member.lastLoginAt)
+      }];
+
+      const activityRows = completedActivities.map(row => ({
+        activityType: activityStatusMap[row.activityType] || row.activityType || "-",
+        status: row.status || "-",
+        vipLevel: row.vipLevel || "-",
+        sourceEvent: row.sourceEvent || "-",
+        createdAt: formatTime(row.createdAt)
+      }));
+
       const content = [
-        renderTable("會員資料", data.users, [
+        renderTable("會員基本資料", profileRows, [
           { key: "email", label: "Email" },
           { key: "displayName", label: "名稱" },
-          { key: "role", label: "角色" },
+          { key: "role", label: "身份" },
           { key: "vipLevel", label: "VIP" },
           { key: "points", label: "積分" },
-          { key: "sourceEvent", label: "來源" },
-          { key: "lastLoginAt", label: "最後登入", format: formatTime }
+          { key: "sourceEvent", label: "來源活動" },
+          { key: "lastLoginAt", label: "最後登入" }
         ]),
-        renderTable("問卷資料", data.surveys, [
-          { key: "email", label: "Email" },
-          { key: "name", label: "姓名" },
-          { key: "phone", label: "手機" },
-          { key: "ageRange", label: "年齡" },
-          { key: "city", label: "地區" },
-          { key: "interest", label: "興趣" },
-          { key: "createdAt", label: "時間", format: formatTime }
-        ]),
-        renderTable("獎勵資料", data.rewards, [
-          { key: "email", label: "Email" },
-          { key: "title", label: "獎勵" },
-          { key: "code", label: "序號 / 折扣碼" },
-          { key: "status", label: "狀態" },
-          { key: "createdAt", label: "時間", format: formatTime }
-        ]),
-        renderTable("活動紀錄", data.activityLogs, [
-          { key: "email", label: "Email" },
+        renderTable("已參加活動項目", activityRows, [
           { key: "activityType", label: "活動" },
           { key: "status", label: "狀態" },
           { key: "vipLevel", label: "當時 VIP" },
-          { key: "createdAt", label: "時間", format: formatTime }
-        ]),
-        renderTable("積分紀錄", data.pointLogs, [
-          { key: "email", label: "Email" },
-          { key: "reason", label: "原因" },
-          { key: "points", label: "點數" },
-          { key: "beforePoints", label: "變動前" },
-          { key: "afterPoints", label: "變動後" },
-          { key: "afterVipLevel", label: "升級後" },
-          { key: "createdAt", label: "時間", format: formatTime }
+          { key: "sourceEvent", label: "來源活動" },
+          { key: "createdAt", label: "參加時間" }
         ])
       ].join("");
+
       $("#backendContent").html(content);
+    }
+
+    async function renderAdminRecords() {
+      renderSummaryCards([
+        { label: "查詢方式", value: "Gmail" },
+        { label: "查詢內容", value: "基本資料" },
+        { label: "活動資料", value: "已參加" }
+      ]);
+      $("#backendContent").html(`<div class="empty-state">請輸入會員 Gmail 後按「查詢會員」。</div>`);
     }
 
     function renderMemberRecords() {
       renderSummaryCards([
         { label: "目前 VIP", value: currentProfile.vipLevel },
         { label: "目前積分", value: currentProfile.points || 0 },
-        { label: "已參加活動", value: currentActivityLogs.filter(log => log.status === "completed").length },
-        { label: "已領獎勵", value: currentRewards.length },
-        { label: "問卷紀錄", value: currentSurveys.length },
-        { label: "積分變動", value: currentPointLogs.length }
+        { label: "身份", value: roleLabel[currentProfile.role] || currentProfile.role || "會員" }
       ]);
 
       const memberProfileRows = [{
@@ -1543,44 +1620,14 @@
         sourceEvent: currentProfile.sourceEvent || "-"
       }];
 
-      const content = [
-        renderTable("我的會員資料", memberProfileRows, [
-          { key: "email", label: "Email" },
-          { key: "displayName", label: "名稱" },
-          { key: "role", label: "身份" },
-          { key: "vipLevel", label: "VIP" },
-          { key: "points", label: "積分" },
-          { key: "sourceEvent", label: "來源活動" }
-        ]),
-        renderTable("我的活動紀錄", currentActivityLogs, [
-          { key: "activityType", label: "活動", format: value => activityStatusMap[value] || value },
-          { key: "status", label: "狀態" },
-          { key: "vipLevel", label: "當時 VIP" },
-          { key: "createdAt", label: "時間", format: formatTime }
-        ]),
-        renderTable("我的積分紀錄", currentPointLogs, [
-          { key: "reason", label: "原因" },
-          { key: "points", label: "點數" },
-          { key: "beforePoints", label: "變動前" },
-          { key: "afterPoints", label: "變動後" },
-          { key: "afterVipLevel", label: "升級後" },
-          { key: "createdAt", label: "時間", format: formatTime }
-        ]),
-        renderTable("我的獎勵", currentRewards, [
-          { key: "title", label: "獎勵" },
-          { key: "code", label: "序號 / 折扣碼" },
-          { key: "status", label: "狀態" },
-          { key: "createdAt", label: "時間", format: formatTime }
-        ]),
-        renderTable("我的問卷", currentSurveys, [
-          { key: "name", label: "姓名" },
-          { key: "phone", label: "手機" },
-          { key: "ageRange", label: "年齡" },
-          { key: "city", label: "地區" },
-          { key: "interest", label: "興趣" },
-          { key: "createdAt", label: "時間", format: formatTime }
-        ])
-      ].join("");
+      const content = renderTable("我的會員資料", memberProfileRows, [
+        { key: "email", label: "Email" },
+        { key: "displayName", label: "名稱" },
+        { key: "role", label: "身份" },
+        { key: "vipLevel", label: "VIP" },
+        { key: "points", label: "積分" },
+        { key: "sourceEvent", label: "來源活動" }
+      ]);
       $("#backendContent").html(content);
     }
 
@@ -1651,25 +1698,26 @@
       alert("資料已重新載入。");
     });
 
-    $("#exportRecordsBtn").on("click", async () => {
-      if (currentProfile?.role === "admin") {
-        const data = currentAdminData || await loadAdminData();
-        const rows = [
-          ...data.users.map(row => ({ collection: "users", email: row.email, name: row.displayName, type: row.vipLevel, value: row.points, code: "", time: formatTime(row.lastLoginAt) })),
-          ...data.surveys.map(row => ({ collection: "surveys", email: row.email, name: row.name, type: row.city, value: row.phone, code: "", time: formatTime(row.createdAt) })),
-          ...data.rewards.map(row => ({ collection: "rewards", email: row.email, name: row.title, type: row.type, value: row.status, code: row.code, time: formatTime(row.createdAt) })),
-          ...data.activityLogs.map(row => ({ collection: "activityLogs", email: row.email, name: row.activityType, type: row.status, value: row.vipLevel, code: "", time: formatTime(row.createdAt) })),
-          ...data.pointLogs.map(row => ({ collection: "pointLogs", email: row.email, name: row.reason, type: row.afterVipLevel, value: row.points, code: `${row.beforePoints || 0}→${row.afterPoints || 0}`, time: formatTime(row.createdAt) }))
-        ];
-        downloadCSV("admin_export.csv", rows);
-      } else {
-        const rows = [
-          ...currentActivityLogs.map(row => ({ collection: "activityLogs", email: currentProfile.email, name: row.activityType, type: row.status, value: row.vipLevel, code: "", time: formatTime(row.createdAt) })),
-          ...currentPointLogs.map(row => ({ collection: "pointLogs", email: currentProfile.email, name: row.reason, type: row.afterVipLevel, value: row.points, code: `${row.beforePoints || 0}→${row.afterPoints || 0}`, time: formatTime(row.createdAt) })),
-          ...currentRewards.map(row => ({ collection: "rewards", email: currentProfile.email, name: row.title, type: row.type, value: row.status, code: row.code, time: formatTime(row.createdAt) })),
-          ...currentSurveys.map(row => ({ collection: "surveys", email: currentProfile.email, name: row.name, type: row.city, value: row.phone, code: row.interest, time: formatTime(row.createdAt) }))
-        ];
-        downloadCSV("member_export.csv", rows);
+    $("#searchMemberBtn").on("click", async () => {
+      if (currentProfile?.role !== "admin") return;
+      const email = $("#adminMemberEmailInput").val().trim();
+      if (!email) {
+        alert("請輸入會員 Gmail。");
+        return;
+      }
+      try {
+        $("#backendContent").html(`<div class="empty-state">查詢中...</div>`);
+        const result = await findMemberByEmail(email);
+        renderAdminSearchResult(result);
+      } catch (error) {
+        $("#backendContent").html(`<div class="empty-state">查詢失敗：${escapeHtml(error.message)}</div>`);
+      }
+    });
+
+    $("#adminMemberEmailInput").on("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        $("#searchMemberBtn").trigger("click");
       }
     });
 
