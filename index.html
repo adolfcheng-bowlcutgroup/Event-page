@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VIP 活動會員中心 v3</title>
+  <title>VIP 活動會員中心 v6</title>
 
   <!-- jQuery：主要用於簡化 DOM 操作與事件綁定 -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -1413,7 +1413,10 @@
           <div class="activity-copy">
             <h3>${escapeHtml(activity.title)}</h3>
             <p>${escapeHtml(activity.desc)}</p>
-            <span class="status-tag ${statusClass}">需 ${vipBadgeHtml(activity.requiredVip)}｜${statusText}${repeatable ? "｜可重複參加" : ""}</span>
+            <div class="tag-row">
+              <span class="status-tag vip-level-${escapeHtml(activity.requiredVip)}">需 ${escapeHtml(activity.requiredVip)} 才能參加</span>
+              <span class="status-tag ${statusClass}">${statusText}${repeatable ? "｜可重複參加" : ""}</span>
+            </div>
           </div>
           <button
             class="btn ${disabled ? "btn-secondary" : "btn-primary"} activity-start"
