@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>西瓜皮娛樂 粉絲集點YA!</title>
+  <title>西瓜皮娛樂 粉絲集點YA! V3</title>
 
   <!-- jQuery：主要用於簡化 DOM 操作與事件綁定 -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -680,7 +680,64 @@
       color: #cbd5e1;
       font-size: 13px;
       vertical-align: top;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
+
+    .admin-table {
+      table-layout: fixed;
+    }
+
+    .email-text,
+    .break-anywhere,
+    .backend-card strong,
+    .profile-email {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      min-width: 0;
+    }
+
+    .detail-card {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.055);
+      border-radius: 16px;
+      padding: 14px;
+      margin-top: 12px;
+    }
+
+    .detail-card summary {
+      cursor: pointer;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 8px 12px;
+      margin-top: 12px;
+      color: #cbd5e1;
+      font-size: 13px;
+    }
+
+    .detail-grid .key {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .detail-grid .value {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .field-hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      margin-top: 4px;
+    }
+
 
     .admin-table th {
       color: #fff;
@@ -1302,6 +1359,12 @@
             <button id="searchMemberBtn" class="btn btn-primary" type="button">查詢會員</button>
           </div>
 
+          <div id="adminExportBox" class="backend-actions hidden">
+            <select id="adminExportActivitySelect"></select>
+            <button id="exportActivityCsvBtn" class="btn btn-primary" type="button">匯出指定活動 CSV</button>
+            <div class="field-hint">匯出內容會依活動類型包含參加紀錄、問卷作答或小遊戲結果。</div>
+          </div>
+
           <div id="backendSummary" class="backend-grid"></div>
           <div id="backendContent"></div>
         </div>
@@ -1762,13 +1825,14 @@
       if (currentProfile.role === "admin") {
         $("#recordsTabButton").text("簡易後台");
         $("#recordsTitle").text("簡易後台");
-        $("#recordsDescription").text("用會員 Gmail 查詢會員基本資料與已參加活動。");
-        $("#adminSearchBox").removeClass("hidden");
+        $("#recordsDescription").text("用會員 Gmail 查詢會員基本資料、活動紀錄與作答結果，或依活動匯出 CSV。");
+        $("#adminSearchBox, #adminExportBox").removeClass("hidden");
+        renderAdminExportOptions();
       } else {
         $("#recordsTabButton").text("我的後台");
         $("#recordsTitle").text("我的後台");
         $("#recordsDescription").text("查看你的基本會員資料。");
-        $("#adminSearchBox").addClass("hidden");
+        $("#adminSearchBox, #adminExportBox").addClass("hidden");
       }
     }
 
@@ -1933,7 +1997,8 @@
                     const rawValue = col.format ? col.format(row[col.key], row) : row[col.key];
                     const cellValue = String(rawValue ?? "");
                     const shouldBadge = col.key === "vipLevel" || col.key === "afterVipLevel" || cellValue === "VIP1" || cellValue === "VIP2" || cellValue === "VIP3";
-                    return `<td>${shouldBadge ? vipBadgeHtml(cellValue) : escapeHtml(cellValue)}</td>`;
+                    const cellClass = col.key?.toLowerCase().includes("email") ? "email-text" : "";
+                    return `<td class="${cellClass}">${shouldBadge ? vipBadgeHtml(cellValue) : escapeHtml(cellValue)}</td>`;
                   }).join("")}</tr>
                 `).join("")}
               </tbody>
@@ -1942,6 +2007,291 @@
         </section>
       `;
     }
+
+
+    function renderAdminExportOptions() {
+      const exportableActivities = activities.filter(activity => !activity.informationalOnly);
+      const options = exportableActivities.map(activity =>
+        `<option value="${escapeHtml(activity.activityType)}">${escapeHtml(activity.title)}</option>`
+      ).join("");
+      $("#adminExportActivitySelect").html(options);
+    }
+
+    function getActivityTitle(activityType) {
+      const activity = activities.find(item => item.activityType === activityType);
+      return activity?.title || activityStatusMap[activityType] || activityType || "-";
+    }
+
+    function formatArrayValue(value) {
+      if (Array.isArray(value)) return value.join("、");
+      if (value === true) return "是";
+      if (value === false) return "否";
+      if (value?.seconds) return formatTime(value);
+      return value ?? "";
+    }
+
+    function detailRowsFromObject(obj, labelMap = {}) {
+      return Object.entries(obj || {})
+        .filter(([key]) => !["id", "userId"].includes(key))
+        .map(([key, value]) => ({
+          key: labelMap[key] || key,
+          value: formatArrayValue(value)
+        }));
+    }
+
+    function renderDetailGrid(rows) {
+      if (!rows.length) return `<div class="empty-state">沒有可顯示的細節。</div>`;
+      return `
+        <div class="detail-grid">
+          ${rows.map(row => `
+            <div class="key">${escapeHtml(row.key)}</div>
+            <div class="value">${escapeHtml(row.value)}</div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function buildSurveyAnswerRows(survey) {
+      const genericLabels = {
+        email: "會員 Email",
+        formEmail: "表單 Email",
+        vipLevel: "填寫時 VIP",
+        name: "姓名 / 暱稱",
+        phone: "手機號碼",
+        ageRange: "年齡區間",
+        city: "居住地區",
+        interest: "感興趣的活動 / 產品",
+        marketingConsent: "同意行銷",
+        sourceEvent: "來源活動",
+        createdAt: "填寫時間"
+      };
+
+      const hunterLabels = {
+        surveyTitle: "問卷名稱",
+        email: "會員 Email",
+        formEmail: "表單 Email",
+        vipLevel: "填寫時 VIP",
+        phone: "手機號碼",
+        ageRange: "年齡區間",
+        playedGreedIslandGame: "是否有登入貪婪之島體驗遊戲",
+        channels: "得知活動管道",
+        channelOther: "其他管道",
+        experienceCount: "實境解謎 / 密室逃脫參與經驗",
+        impressions: "印象最深刻項目",
+        revisitReasons: "再次參加原因",
+        merchandiseSpend: "周邊消費金額",
+        interestedMerchTypes: "感興趣周邊類型",
+        futureIp: "希望合作 IP",
+        pastBowlcutEvents: "玩過的西瓜皮活動 / 展覽",
+        suggestion: "建議或改善意見",
+        sourceEvent: "來源活動",
+        createdAt: "填寫時間"
+      };
+
+      const labels = survey?.surveyType === "hunter_satisfaction_kaohsiung" ? hunterLabels : genericLabels;
+      return Object.keys(labels)
+        .filter(key => survey && Object.prototype.hasOwnProperty.call(survey, key))
+        .map(key => ({
+          key: labels[key],
+          value: formatArrayValue(survey[key])
+        }));
+    }
+
+    function findSurveyForActivity(activityLog, surveys) {
+      if (!activityLog) return null;
+      if (activityLog.activityType === "hunter_satisfaction_kaohsiung") {
+        return surveys.find(item => item.surveyType === "hunter_satisfaction_kaohsiung") || null;
+      }
+      if (activityLog.activityType === "survey") {
+        return surveys.find(item => !item.surveyType || item.surveyType === "survey") || null;
+      }
+      return null;
+    }
+
+    function renderMemberActivityDetails(activitiesRows, surveysRows, rewardsRows, pointRows) {
+      if (!activitiesRows.length) {
+        return `
+          <section class="backend-section">
+            <h3>已參加活動與作答結果</h3>
+            <div class="empty-state">此會員目前沒有完成活動紀錄。</div>
+          </section>
+        `;
+      }
+
+      return `
+        <section class="backend-section">
+          <h3>已參加活動與作答結果</h3>
+          ${activitiesRows.map(log => {
+            const activityTitle = getActivityTitle(log.activityType);
+            const survey = findSurveyForActivity(log, surveysRows);
+            const relatedRewards = rewardsRows.filter(reward =>
+              reward.email === log.email &&
+              (
+                reward.code === log.extra?.rewardCode ||
+                (log.activityType === "spin_game" && reward.type === "discount") ||
+                (log.activityType === "survey" && reward.type === "serial")
+              )
+            );
+            const relatedPointLogs = pointRows.filter(pointLog =>
+              pointLog.reason?.includes(activityTitle) ||
+              pointLog.reason?.includes("問卷") && log.activityType === "survey" ||
+              pointLog.reason?.includes("小遊戲") && log.activityType === "spin_game" ||
+              pointLog.reason?.includes("水見式") && log.activityType === "aura_cup_game" ||
+              pointLog.reason?.includes("獵人") && log.activityType === "hunter_satisfaction_kaohsiung"
+            );
+
+            const activityRows = [
+              { key: "活動名稱", value: activityTitle },
+              { key: "活動類型", value: log.activityType },
+              { key: "狀態", value: log.status },
+              { key: "當時 VIP", value: log.vipLevel || "-" },
+              { key: "來源活動", value: log.sourceEvent || "-" },
+              { key: "參加時間", value: formatTime(log.createdAt) },
+              ...detailRowsFromObject(log.extra || {}, {
+                rewardCode: "獎勵碼",
+                discount: "折扣",
+                result: "測驗結果",
+                resultKey: "結果代碼",
+                points: "獲得積分",
+                playedGreedIslandGame: "是否有登入貪婪之島體驗遊戲",
+                surveyTitle: "問卷名稱"
+              })
+            ];
+
+            const surveyHtml = survey
+              ? `<h4>作答結果</h4>${renderDetailGrid(buildSurveyAnswerRows(survey))}`
+              : `<h4>作答結果</h4><div class="empty-state">此活動沒有問卷作答資料，或目前查無對應作答。</div>`;
+
+            const rewardHtml = relatedRewards.length
+              ? `<h4>相關獎勵</h4>${renderDetailGrid(relatedRewards.flatMap(reward => [
+                  { key: "獎勵", value: reward.title || reward.type },
+                  { key: "代碼", value: reward.code || "-" },
+                  { key: "狀態", value: reward.status || "-" },
+                  { key: "建立時間", value: formatTime(reward.createdAt) }
+                ]))}`
+              : "";
+
+            const pointsHtml = relatedPointLogs.length
+              ? `<h4>相關積分</h4>${renderDetailGrid(relatedPointLogs.flatMap(point => [
+                  { key: "原因", value: point.reason || "-" },
+                  { key: "積分", value: point.points || 0 },
+                  { key: "異動後", value: `${point.afterPoints || 0} 點 / ${point.afterVipLevel || "-"}` },
+                  { key: "時間", value: formatTime(point.createdAt) }
+                ]))}`
+              : "";
+
+            return `
+              <details class="detail-card">
+                <summary>${escapeHtml(activityTitle)}｜${escapeHtml(formatTime(log.createdAt))}</summary>
+                <h4>活動紀錄</h4>
+                ${renderDetailGrid(activityRows)}
+                ${surveyHtml}
+                ${rewardHtml}
+                ${pointsHtml}
+              </details>
+            `;
+          }).join("")}
+        </section>
+      `;
+    }
+
+    function buildCsvRowsForActivity(activityType, activityLogs, surveys, rewards, pointLogs) {
+      const logs = activityLogs.filter(log => log.activityType === activityType && log.status === "completed");
+      const rows = [];
+
+      if (activityType === "hunter_satisfaction_kaohsiung") {
+        const surveyRows = surveys.filter(survey => survey.surveyType === "hunter_satisfaction_kaohsiung");
+        surveyRows.forEach(survey => {
+          const log = logs.find(item => item.userId === survey.userId || item.email === survey.email) || {};
+          rows.push({
+            活動名稱: getActivityTitle(activityType),
+            會員Email: survey.email || "",
+            表單Email: survey.formEmail || "",
+            手機: survey.phone || "",
+            年齡區間: survey.ageRange || "",
+            VIP: survey.vipLevel || log.vipLevel || "",
+            是否有登入遊戲: survey.playedGreedIslandGame || "",
+            得知管道: formatArrayValue(survey.channels),
+            其他管道: survey.channelOther || "",
+            參與經驗: survey.experienceCount || "",
+            印象最深刻: formatArrayValue(survey.impressions),
+            再次參加原因: formatArrayValue(survey.revisitReasons),
+            周邊消費: survey.merchandiseSpend || "",
+            感興趣周邊: formatArrayValue(survey.interestedMerchTypes),
+            希望合作IP: survey.futureIp || "",
+            曾參加西瓜皮活動: formatArrayValue(survey.pastBowlcutEvents),
+            建議: survey.suggestion || "",
+            來源活動: survey.sourceEvent || "",
+            填寫時間: formatTime(survey.createdAt)
+          });
+        });
+        return rows;
+      }
+
+      if (activityType === "survey") {
+        const surveyRows = surveys.filter(survey => !survey.surveyType || survey.surveyType === "survey");
+        surveyRows.forEach(survey => {
+          rows.push({
+            活動名稱: getActivityTitle(activityType),
+            會員Email: survey.email || "",
+            姓名: survey.name || "",
+            手機: survey.phone || "",
+            年齡區間: survey.ageRange || "",
+            居住地區: survey.city || "",
+            感興趣內容: survey.interest || "",
+            同意行銷: formatArrayValue(survey.marketingConsent),
+            VIP: survey.vipLevel || "",
+            來源活動: survey.sourceEvent || "",
+            填寫時間: formatTime(survey.createdAt)
+          });
+        });
+        return rows;
+      }
+
+      logs.forEach(log => {
+        const reward = rewards.find(item => item.email === log.email && item.code === log.extra?.rewardCode) || {};
+        const point = pointLogs.find(item => item.email === log.email && item.createdAt?.seconds === log.createdAt?.seconds) || {};
+        rows.push({
+          活動名稱: getActivityTitle(activityType),
+          會員Email: log.email || "",
+          VIP: log.vipLevel || "",
+          狀態: log.status || "",
+          獲得積分: log.extra?.points || point.points || "",
+          結果: log.extra?.result || log.extra?.discount || "",
+          獎勵碼: log.extra?.rewardCode || reward.code || "",
+          來源活動: log.sourceEvent || "",
+          參加時間: formatTime(log.createdAt)
+        });
+      });
+      return rows;
+    }
+
+    async function exportActivityCSV() {
+      if (currentProfile?.role !== "admin") return;
+      const activityType = $("#adminExportActivitySelect").val();
+      if (!activityType) {
+        alert("請先選擇活動。");
+        return;
+      }
+
+      $("#exportActivityCsvBtn").prop("disabled", true).text("匯出中...");
+      try {
+        const [activityLogs, surveys, rewards, pointLogs] = await Promise.all([
+          loadCollectionAll("activityLogs", 500),
+          loadCollectionAll("surveys", 500),
+          loadCollectionAll("rewards", 500),
+          loadCollectionAll("pointLogs", 500)
+        ]);
+        const rows = buildCsvRowsForActivity(activityType, activityLogs, surveys, rewards, pointLogs);
+        const safeName = getActivityTitle(activityType).replace(/[\\/:*?"<>|]/g, "_");
+        downloadCSV(`${safeName}_${new Date().toISOString().slice(0, 10)}.csv`, rows);
+      } catch (error) {
+        alert(`匯出失敗：${error.message}`);
+      } finally {
+        $("#exportActivityCsvBtn").prop("disabled", false).text("匯出指定活動 CSV");
+      }
+    }
+
 
     async function renderRecords() {
       if (!currentProfile) return;
@@ -1974,8 +2324,14 @@
       if (!userRows.length) return null;
       const member = userRows[0];
       const userId = member.uid || member.id;
-      const activities = await loadCollectionByUser("activityLogs", userId, 50);
-      return { member, activities };
+      const [activities, surveys, rewards, pointLogs] = await Promise.all([
+        loadCollectionByUser("activityLogs", userId, 100),
+        loadCollectionByUser("surveys", userId, 100),
+        loadCollectionByUser("rewards", userId, 100),
+        loadCollectionByUser("pointLogs", userId, 100)
+      ]);
+
+      return { member, activities, surveys, rewards, pointLogs };
     }
 
     function renderAdminSearchResult(result) {
@@ -2000,12 +2356,16 @@
         role: roleLabel[member.role] || member.role || "會員",
         vipLevel: member.vipLevel || "VIP1",
         points: member.points || 0,
+        phone: member.phone || "-",
+        ageRange: member.ageRange || "-",
+        city: member.city || "-",
+        marketingConsent: formatArrayValue(member.marketingConsent),
         sourceEvent: member.sourceEvent || "-",
         lastLoginAt: formatTime(member.lastLoginAt)
       }];
 
       const activityRows = completedActivities.map(row => ({
-        activityType: activityStatusMap[row.activityType] || row.activityType || "-",
+        activityType: getActivityTitle(row.activityType),
         status: row.status || "-",
         vipLevel: row.vipLevel || "-",
         sourceEvent: row.sourceEvent || "-",
@@ -2019,28 +2379,34 @@
           { key: "role", label: "身份" },
           { key: "vipLevel", label: "VIP" },
           { key: "points", label: "積分" },
+          { key: "phone", label: "手機" },
+          { key: "ageRange", label: "年齡" },
+          { key: "city", label: "地區" },
+          { key: "marketingConsent", label: "同意行銷" },
           { key: "sourceEvent", label: "來源活動" },
           { key: "lastLoginAt", label: "最後登入" }
         ]),
-        renderTable("已參加活動項目", activityRows, [
+        renderTable("已參加活動摘要", activityRows, [
           { key: "activityType", label: "活動" },
           { key: "status", label: "狀態" },
           { key: "vipLevel", label: "當時 VIP" },
           { key: "sourceEvent", label: "來源活動" },
           { key: "createdAt", label: "參加時間" }
-        ])
+        ]),
+        renderMemberActivityDetails(completedActivities, result.surveys, result.rewards, result.pointLogs)
       ].join("");
 
       $("#backendContent").html(content);
     }
 
     async function renderAdminRecords() {
+      renderAdminExportOptions();
       renderSummaryCards([
         { label: "查詢方式", value: "Gmail" },
-        { label: "查詢內容", value: "基本資料" },
-        { label: "活動資料", value: "已參加" }
+        { label: "查詢內容", value: "基本資料 + 作答" },
+        { label: "CSV 匯出", value: "指定活動" }
       ]);
-      $("#backendContent").html(`<div class="empty-state">請輸入會員 Gmail 後按「查詢會員」。</div>`);
+      $("#backendContent").html(`<div class="empty-state">請輸入會員 Gmail 查詢會員資料與活動作答，或選擇活動後匯出 CSV。</div>`);
     }
 
     function renderMemberRecords() {
@@ -2278,6 +2644,8 @@
         $("#backendContent").html(`<div class="empty-state">查詢失敗：${escapeHtml(error.message)}</div>`);
       }
     });
+
+    $("#exportActivityCsvBtn").on("click", exportActivityCSV);
 
     $("#adminMemberEmailInput").on("keydown", function (event) {
       if (event.key === "Enter") {
