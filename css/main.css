@@ -257,6 +257,63 @@ h1 {
 
 .activity-list { display: grid; gap: 12px; }
 
+.activity-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 16px;
+  align-items: start;
+}
+
+.vip-exclusive-panel {
+  position: sticky;
+  top: 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.section-subtitle {
+  margin-bottom: 12px;
+}
+
+.section-subtitle h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.section-subtitle p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.vip-list .activity-card {
+  background:
+    linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(167, 139, 250, 0.08)),
+    rgba(255, 255, 255, 0.06);
+}
+
+.vip-list .activity-summary {
+  grid-template-columns: auto 1fr;
+}
+
+.vip-list .activity-meta {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+}
+
+.vip-empty {
+  color: var(--muted);
+  line-height: 1.6;
+  border: 1px dashed var(--line);
+  border-radius: 16px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+
 .activity-card {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--line);
@@ -455,7 +512,9 @@ select option { color: #111827; }
 }
 
 @media (max-width: 880px) {
-  .dashboard { grid-template-columns: 1fr; }
+  .dashboard,
+  .activity-layout { grid-template-columns: 1fr; }
+  .vip-exclusive-panel { position: static; }
   .activity-summary { grid-template-columns: auto 1fr; }
   .activity-meta { grid-column: 1 / -1; justify-content: flex-start; }
   .check-grid { grid-template-columns: 1fr; }

@@ -111,7 +111,25 @@ export function setActivities(list) {
 export function renderActivities() {
   if (!state.currentProfile || !activitiesRef.length) return;
 
-  const html = activitiesRef.map((activity) => {
+  const generalActivities = activitiesRef.filter(activity => !isVipExclusiveActivity(activity));
+  const vipActivities = activitiesRef.filter(activity => isVipExclusiveActivity(activity));
+
+  $("#activityGrid").html(renderActivityCards(generalActivities));
+  $("#vipActivityGrid").html(
+    vipActivities.length
+      ? renderActivityCards(vipActivities)
+      : `<div class="vip-empty">目前尚無 VIP 專屬活動。</div>`
+  );
+
+  $("#activityDetail").addClass("hidden").empty();
+}
+
+function isVipExclusiveActivity(activity) {
+  return activity.type === "benefit" || activity.requiredVip === "VIP2" || activity.requiredVip === "VIP3";
+}
+
+function renderActivityCards(list) {
+  return list.map((activity) => {
     const allowed = canAccess(state.currentProfile.vipLevel, activity.requiredVip);
     const participated = hasParticipated(activity.id);
     const isBenefit = activity.type === "benefit";
@@ -161,9 +179,6 @@ export function renderActivities() {
       </article>
     `;
   }).join("");
-
-  $("#activityGrid").html(html);
-  $("#activityDetail").addClass("hidden").empty();
 }
 
 export function bindActivityEvents() {

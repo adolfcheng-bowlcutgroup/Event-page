@@ -76,3 +76,7 @@ admins/{管理員信箱小寫}
 ## 注意
 
 目前是 MVP 前端版。正式上線建議將「加積分、發獎、防重複參加」搬到 Cloud Functions。
+
+## 版面說明
+
+活動頁目前分為「一般活動」與「VIP專屬區域」。`type: "benefit"`、`requiredVip: "VIP2"` 或 `requiredVip: "VIP3"` 的活動會自動顯示在右側 VIP 專屬區域。

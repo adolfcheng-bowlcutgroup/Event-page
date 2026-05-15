@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>西瓜皮娛樂 粉絲集點YA! v2</title>
+  <title>西瓜皮娛樂 粉絲集點YA!</title>
   <link rel="stylesheet" href="./css/main.css" />
   <link rel="stylesheet" href="./activities/spin-game/style.css" />
   <link rel="stylesheet" href="./activities/aura-game/style.css" />
@@ -85,7 +85,24 @@
               <p>依 VIP 權限與參加狀態顯示可參加內容</p>
             </div>
           </div>
-          <div id="activityGrid" class="activity-list"></div>
+          <div class="activity-layout">
+            <div>
+              <div class="section-subtitle">
+                <h3>一般活動</h3>
+                <p>問卷、小遊戲與可累積積分的活動</p>
+              </div>
+              <div id="activityGrid" class="activity-list"></div>
+            </div>
+
+            <aside class="vip-exclusive-panel">
+              <div class="section-subtitle">
+                <h3>VIP專屬</h3>
+                <p>符合指定 VIP 等級後解鎖</p>
+              </div>
+              <div id="vipActivityGrid" class="activity-list vip-list"></div>
+            </aside>
+          </div>
+
           <div id="activityDetail" class="activity-detail hidden"></div>
         </div>
 
