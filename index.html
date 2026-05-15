@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VIP 活動會員中心 v4</title>
+  <title>西瓜皮娛樂 粉絲集點YA!</title>
 
   <!-- jQuery：主要用於簡化 DOM 操作與事件綁定 -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -802,6 +802,12 @@
       color: #fee2e2;
       background: rgba(220, 38, 38, 0.16);
       border-color: rgba(220, 38, 38, 0.32);
+    }
+
+    .status-tag.unlocked {
+      color: #fef3c7;
+      background: rgba(245, 158, 11, 0.16);
+      border-color: rgba(245, 158, 11, 0.38);
     }
 
     .backend-actions {
@@ -1603,19 +1609,27 @@
       const completed = hasCompletedActivity(activity.activityType);
       const repeatable = activity.repeatable === true;
       const locked = !allowed;
-      const disabled = locked || (completed && !repeatable) || activity.informationalOnly;
+      const isBenefit = activity.informationalOnly === true;
+      const disabled = locked || (!isBenefit && completed && !repeatable);
+
       let statusText = allowed ? "可參加" : "資格不符";
       let statusClass = allowed ? "" : "locked-tag";
-      if (completed && !repeatable) {
+
+      if (isBenefit && allowed) {
+        statusText = "已解鎖";
+        statusClass = "unlocked";
+      } else if (completed && !repeatable) {
         statusText = "已參加";
         statusClass = "done";
       }
-      if (activity.informationalOnly && allowed) {
-        statusText = "資格不符";
-        statusClass = "locked-tag";
-      }
 
-      const buttonText = activity.informationalOnly ? "資格不符" : completed && !repeatable ? "已參加" : locked ? "資格不符" : "開始";
+      const buttonText = locked
+        ? "資格不符"
+        : isBenefit
+          ? "查看權益"
+          : completed && !repeatable
+            ? "已參加"
+            : "開始";
 
       return `
         <article class="activity-row ${locked ? "locked" : ""} ${completed ? "completed" : ""}">
@@ -1637,6 +1651,18 @@
           >${buttonText}</button>
         </article>
       `;
+    }
+
+    function showBenefitInfo(activity) {
+      if (!activity) return;
+
+      const messages = {
+        vip2_fastpass: "你已解鎖 VIP2 快速通關資格。請於線下活動現場向工作人員出示此畫面。",
+        vip3_draw: "你已解鎖 VIP3 限定抽獎資格。正式抽獎功能尚未開放，請留意後續活動公告。"
+      };
+
+      const message = messages[activity.activityType] || `你已解鎖「${activity.title}」權益。`;
+      alert(message);
     }
 
     function renderParticipationState() {
@@ -1998,7 +2024,15 @@
     $(document).on("click", ".activity-start", function () {
       const activityType = $(this).data("activity-type");
       const activity = activities.find(item => item.activityType === activityType);
-      if (!activity || !canJoinActivity(activity)) return;
+      if (!activity) return;
+
+      if (activity.informationalOnly) {
+        if (!canAccess(currentProfile?.vipLevel || "VIP1", activity.requiredVip)) return;
+        showBenefitInfo(activity);
+        return;
+      }
+
+      if (!canJoinActivity(activity)) return;
       switchTab(activity.tab);
     });
 
