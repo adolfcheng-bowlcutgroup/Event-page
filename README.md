@@ -87,3 +87,25 @@ admins/{管理員信箱小寫}
 - 點擊活動的「開始」後，任務內容會直接顯示在該活動卡片下方。
 - 一般會員後台已移除來源活動欄位。
 - 背景加入原色系的無限漸層動態。
+
+## CRM 功能：會員標籤與報表儀錶板
+
+本版新增：
+
+- `js/tags.js`
+- `tags` collection：標籤主資料
+- `userTags` collection：會員與標籤關聯
+- 完成活動後自動產生會員標籤
+- 管理員可用標籤查詢會員並匯出 CSV
+- 管理員可載入即時報表儀錶板
+
+目前報表為 MVP 前端即時計算，會讀取：
+
+- `users`
+- `activityLogs`
+- `surveys`
+- `rewards`
+- `pointLogs`
+- `userTags`
+
+資料量變大後，建議改用 Cloud Functions 預先彙整到 `campaignStats`、`dailyStats`、`vipStats`。

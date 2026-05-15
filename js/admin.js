@@ -11,6 +11,7 @@ import {
   formatDateFromTimestamp,
   sortByCreatedAtDesc
 } from "./user.js";
+import { loadUserTags } from "./tags.js";
 import { activities } from "./activity-registry.js";
 
 export function renderBackend() {
@@ -25,12 +26,14 @@ export function renderBackend() {
   }
 }
 
-function renderMemberBackend() {
+async function renderMemberBackend() {
+  const tags = await loadUserTags(state.currentProfile.uid);
+
   $("#backendContent").html(`
     <div class="section-title">
       <div>
         <h2>我的後台</h2>
-        <p>查看你的會員基本資料。</p>
+        <p>查看你的會員基本資料與會員標籤。</p>
       </div>
     </div>
     <div class="data-card">
@@ -41,6 +44,12 @@ function renderMemberBackend() {
       <p><strong>VIP：</strong>${state.currentProfile.vipLevel}</p>
       <p><strong>積分：</strong>${state.currentProfile.points || 0}</p>
     </div>
+    <div class="data-card">
+      <h3>我的會員標籤</h3>
+      <div class="tag-cloud">
+        ${tags.length ? tags.map(tag => `<span class="crm-tag">${tag.tagName}</span>`).join("") : `<span class="muted-text">尚無標籤</span>`}
+      </div>
+    </div>
   `);
 }
 
@@ -49,8 +58,15 @@ function renderAdminBackend() {
     <div class="section-title">
       <div>
         <h2>簡易後台</h2>
-        <p>可依活動匯出 CSV，或用會員信箱查詢該會員資料與作答結果。</p>
+        <p>會員查詢、活動匯出、會員標籤與報表儀錶板。</p>
       </div>
+    </div>
+
+    <div class="data-card">
+      <h3>報表儀錶板</h3>
+      <p class="muted-text">即時讀取目前 Firestore 資料並產生 MVP 統計。</p>
+      <button id="loadDashboardBtn" class="btn btn-primary" type="button">載入報表</button>
+      <div id="dashboardResult"></div>
     </div>
 
     <div class="data-card">
@@ -67,9 +83,15 @@ function renderAdminBackend() {
         </select>
         <button id="exportActivityCsvBtn" class="btn btn-primary" type="button">匯出 CSV</button>
       </div>
-      <div class="notice">
-        若匯出失敗，請確認 Firestore Rules 允許管理員讀取 activityLogs、surveys、rewards、pointLogs。
+    </div>
+
+    <div class="data-card">
+      <h3>會員標籤查詢 / 匯出</h3>
+      <div class="backend-row">
+        <input id="tagQueryInput" placeholder="輸入標籤名稱或 tagId，例如 高雄站參與者 / kaohsiung_participant" />
+        <button id="searchTagBtn" class="btn btn-primary" type="button">查詢標籤會員</button>
       </div>
+      <div id="tagSearchResult"></div>
     </div>
 
     <div class="data-card">
@@ -82,8 +104,50 @@ function renderAdminBackend() {
     </div>
   `);
 
+  $("#loadDashboardBtn").on("click", loadDashboard);
   $("#exportActivityCsvBtn").on("click", exportSelectedActivityCsv);
   $("#searchMemberBtn").on("click", searchMemberByEmail);
+  $("#searchTagBtn").on("click", searchUsersByTag);
+}
+
+async function loadDashboard() {
+  $("#dashboardResult").html(`<div class="notice">報表載入中...</div>`);
+
+  try {
+    const [users, activityLogs, surveys, rewards, pointLogs, userTags] = await Promise.all([
+      fetchCollection("users", 1000),
+      fetchCollection("activityLogs", 1000),
+      fetchCollection("surveys", 1000),
+      fetchCollection("rewards", 1000),
+      fetchCollection("pointLogs", 1000),
+      fetchCollection("userTags", 1000)
+    ]);
+
+    const completedLogs = activityLogs.filter(log => log.status === "completed");
+    const totalPoints = pointLogs.reduce((sum, log) => sum + Number(log.points || 0), 0);
+    const vipDistribution = countBy(users, "vipLevel");
+    const activityRanking = countBy(completedLogs, "activityTitle");
+    const tagRanking = countBy(userTags, "tagName");
+
+    $("#dashboardResult").html(`
+      <div class="stat-grid dashboard-stats">
+        <div class="stat"><strong>${users.length}</strong><span>總會員數</span></div>
+        <div class="stat"><strong>${completedLogs.length}</strong><span>活動完成數</span></div>
+        <div class="stat"><strong>${surveys.length}</strong><span>問卷完成數</span></div>
+        <div class="stat"><strong>${rewards.length}</strong><span>獎勵發放數</span></div>
+        <div class="stat"><strong>${totalPoints}</strong><span>總發放點數</span></div>
+        <div class="stat"><strong>${userTags.length}</strong><span>標籤筆數</span></div>
+      </div>
+
+      <div class="dashboard-grid">
+        ${renderMiniTable("VIP 分布", vipDistribution)}
+        ${renderMiniTable("活動參與排行", activityRanking)}
+        ${renderMiniTable("標籤排行", tagRanking)}
+      </div>
+    `);
+  } catch (error) {
+    $("#dashboardResult").html(`<div class="notice">報表載入失敗：${error.message}</div>`);
+  }
 }
 
 async function exportSelectedActivityCsv() {
@@ -106,6 +170,67 @@ async function exportSelectedActivityCsv() {
   }
 }
 
+async function searchUsersByTag() {
+  const queryText = String($("#tagQueryInput").val() || "").trim();
+  if (!queryText) {
+    alert("請輸入標籤名稱或 tagId。");
+    return;
+  }
+
+  $("#tagSearchResult").html(`<div class="notice">查詢中...</div>`);
+
+  try {
+    const [byTagName, byTagId] = await Promise.all([
+      getDocs(query(collection(db, "userTags"), where("tagName", "==", queryText), limit(500))),
+      getDocs(query(collection(db, "userTags"), where("tagId", "==", queryText), limit(500)))
+    ]);
+
+    const rowsMap = new Map();
+    [...byTagName.docs, ...byTagId.docs].forEach(doc => {
+      rowsMap.set(doc.id, { id: doc.id, ...doc.data() });
+    });
+
+    const rows = Array.from(rowsMap.values());
+
+    if (!rows.length) {
+      $("#tagSearchResult").html(`<div class="notice">查無符合此標籤的會員。</div>`);
+      return;
+    }
+
+    $("#tagSearchResult").html(`
+      <div class="activity-actions">
+        <button id="exportTagCsvBtn" class="btn btn-secondary" type="button">匯出此標籤會員 CSV</button>
+      </div>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>標籤</th>
+            <th>分類</th>
+            <th>來源</th>
+            <th>原因</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr>
+              <td><span class="email-text">${row.email || ""}</span></td>
+              <td>${row.tagName || ""}</td>
+              <td>${row.category || ""}</td>
+              <td>${row.source || ""}</td>
+              <td>${row.reason || ""}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `);
+
+    $("#exportTagCsvBtn").on("click", () => downloadCsv(`tag_${queryText}.csv`, rows));
+  } catch (error) {
+    $("#tagSearchResult").html(`<div class="notice">標籤查詢失敗：${error.message}</div>`);
+  }
+}
+
 async function searchMemberByEmail() {
   const emailKey = String($("#memberEmailQuery").val() || "").trim().toLowerCase();
   if (!emailKey) {
@@ -125,14 +250,15 @@ async function searchMemberByEmail() {
     const userDoc = userSnap.docs[0];
     const user = { id: userDoc.id, ...userDoc.data() };
 
-    const [logs, surveys, rewards, pointLogs] = await Promise.all([
+    const [logs, surveys, rewards, pointLogs, tags] = await Promise.all([
       getByUser("activityLogs", user.uid),
       getByUser("surveys", user.uid),
       getByUser("rewards", user.uid),
-      getByUser("pointLogs", user.uid)
+      getByUser("pointLogs", user.uid),
+      getByUser("userTags", user.uid)
     ]);
 
-    renderMemberSearchResult(user, logs, surveys, rewards, pointLogs);
+    renderMemberSearchResult(user, logs, surveys, rewards, pointLogs, tags);
   } catch (error) {
     $("#memberSearchResult").html(`<div class="notice">查詢失敗：${error.message}</div>`);
   }
@@ -143,7 +269,12 @@ async function getByUser(collectionName, uid) {
   return sortByCreatedAtDesc(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 }
 
-function renderMemberSearchResult(user, logs, surveys, rewards, pointLogs) {
+async function fetchCollection(collectionName, max = 1000) {
+  const snap = await getDocs(query(collection(db, collectionName), limit(max)));
+  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+function renderMemberSearchResult(user, logs, surveys, rewards, pointLogs, tags) {
   const activityRows = logs.map(log => {
     const relatedSurvey = surveys.find(s => s.activityId === log.activityId || s.id === log.extra?.surveyId);
     const relatedReward = rewards.find(r => r.activityId === log.activityId);
@@ -176,6 +307,13 @@ function renderMemberSearchResult(user, logs, surveys, rewards, pointLogs) {
     </div>
 
     <div class="data-card">
+      <h3>會員標籤</h3>
+      <div class="tag-cloud">
+        ${tags.length ? tags.map(tag => `<span class="crm-tag">${tag.tagName}</span>`).join("") : `<span class="muted-text">尚無標籤</span>`}
+      </div>
+    </div>
+
+    <div class="data-card">
       <h3>參加的活動項目</h3>
       <table class="admin-table">
         <thead>
@@ -189,6 +327,34 @@ function renderMemberSearchResult(user, logs, surveys, rewards, pointLogs) {
       </table>
     </div>
   `);
+}
+
+function renderMiniTable(title, data) {
+  const rows = Object.entries(data || {})
+    .sort((a, b) => Number(b[1]) - Number(a[1]))
+    .slice(0, 10);
+
+  return `
+    <div class="data-card">
+      <h3>${title}</h3>
+      <table class="admin-table">
+        <thead>
+          <tr><th>項目</th><th>數量</th></tr>
+        </thead>
+        <tbody>
+          ${rows.length ? rows.map(([key, value]) => `<tr><td>${key}</td><td>${value}</td></tr>`).join("") : `<tr><td colspan="2">尚無資料</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function countBy(items, key) {
+  return items.reduce((acc, item) => {
+    const value = item[key] || "未分類";
+    acc[value] = (acc[value] || 0) + 1;
+    return acc;
+  }, {});
 }
 
 function flattenObject(obj, prefix = "") {

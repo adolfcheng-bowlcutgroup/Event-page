@@ -1,3 +1,5 @@
+import { applyAutoTags } from "./tags.js";
+
 import {
   db,
   doc,
@@ -226,10 +228,12 @@ export async function completeActivity(activity, payload = {}) {
     details: payload.details || null
   });
 
+  const appliedTags = await applyAutoTags(state.currentUser, state.currentProfile, activity, payload);
+
   state.rewards = await loadRewards(state.currentUser.uid);
   state.participations = await loadParticipations(state.currentUser.uid);
 
-  return { pointResult, rewardCode };
+  return { pointResult, rewardCode, appliedTags };
 }
 
 export function sortByCreatedAtDesc(items) {

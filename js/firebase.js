@@ -18,7 +18,8 @@ import {
   query,
   where,
   getDocs,
-  limit
+  limit,
+  arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 export const firebaseConfig = {
@@ -55,5 +56,6 @@ export {
   query,
   where,
   getDocs,
-  limit
+  limit,
+  arrayUnion
 };
