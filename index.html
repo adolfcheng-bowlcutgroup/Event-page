@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VIP 活動會員中心 v6</title>
+  <title>VIP 活動會員中心 v4</title>
 
   <!-- jQuery：主要用於簡化 DOM 操作與事件綁定 -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
     :root {
@@ -523,6 +524,135 @@
       font-size: 22px;
     }
 
+
+    .aura-stage {
+      display: grid;
+      place-items: center;
+      gap: 18px;
+      padding: 18px 0;
+      text-align: center;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    .aura-instruction {
+      color: #cbd5e1;
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .aura-cup-card {
+      width: min(100%, 390px);
+      border-radius: 28px;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.18), transparent 34%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .aura-cup {
+      position: relative;
+      width: 260px;
+      height: 260px;
+      margin: 0 auto;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 47%, rgba(224, 242, 254, 0.96) 0 35%, rgba(125, 211, 252, 0.86) 36% 51%, rgba(15, 23, 42, 0.95) 52% 56%, rgba(255, 255, 255, 0.2) 57% 62%, rgba(15, 23, 42, 0.85) 63% 100%);
+      border: 12px solid rgba(255, 255, 255, 0.18);
+      box-shadow: inset 0 0 28px rgba(255, 255, 255, 0.26), 0 18px 38px rgba(0, 0, 0, 0.32);
+      overflow: hidden;
+    }
+
+    .aura-cup::before {
+      content: "";
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 999px;
+      border: 2px solid rgba(255, 255, 255, 0.28);
+      animation: waterPulse 2.6s ease-in-out infinite;
+    }
+
+    .aura-leaf {
+      position: relative;
+      z-index: 2;
+      width: 86px;
+      height: 42px;
+      border-radius: 100% 0 100% 0;
+      background: linear-gradient(135deg, #22c55e, #84cc16);
+      transform: rotate(-24deg);
+      box-shadow: 0 8px 18px rgba(21, 128, 61, 0.34);
+    }
+
+    .aura-leaf::after {
+      content: "";
+      position: absolute;
+      left: 10px;
+      top: 20px;
+      width: 66px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.55);
+      transform: rotate(6deg);
+      border-radius: 999px;
+    }
+
+    .aura-cup.holding .aura-leaf {
+      animation: leafFocus 0.8s ease-in-out infinite alternate;
+    }
+
+    .aura-countdown {
+      min-height: 48px;
+      display: grid;
+      place-items: center;
+      font-size: 36px;
+      font-weight: 950;
+      color: #fde68a;
+      text-shadow: 0 10px 28px rgba(245, 158, 11, 0.35);
+    }
+
+    .aura-result-card {
+      width: min(100%, 460px);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.09);
+      box-shadow: var(--shadow);
+    }
+
+    .aura-result-card h3 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: -0.03em;
+    }
+
+    .aura-result-card p {
+      color: #cbd5e1;
+      line-height: 1.75;
+      margin: 0;
+    }
+
+    .aura-result-enhancement { border-color: rgba(245, 158, 11, 0.55); }
+    .aura-result-emission { border-color: rgba(59, 130, 246, 0.55); }
+    .aura-result-manipulation { border-color: rgba(34, 197, 94, 0.55); }
+    .aura-result-transmutation { border-color: rgba(168, 85, 247, 0.55); }
+    .aura-result-specialist { border-color: rgba(244, 63, 94, 0.55); }
+    .aura-result-art { border-color: rgba(236, 72, 153, 0.55); }
+
+    @keyframes waterPulse {
+      0%, 100% { transform: scale(0.88); opacity: 0.45; }
+      50% { transform: scale(1.08); opacity: 0.85; }
+    }
+
+    @keyframes leafFocus {
+      from { transform: rotate(-24deg) translateY(0) scale(1); }
+      to { transform: rotate(-12deg) translateY(-4px) scale(1.08); }
+    }
+
     .notice {
       border-radius: 16px;
       padding: 14px;
@@ -941,6 +1071,37 @@
           </div>
         </div>
 
+        <div id="auraTab" class="tab-panel hidden">
+          <div class="section-title">
+            <div>
+              <h2>水見式能力測驗</h2>
+              <p>按住杯面 3 秒，顯示你的能力系別。完成後可獲得 5 點積分。</p>
+            </div>
+          </div>
+
+          <div id="auraLockedNotice" class="empty-state hidden">你已參加過水見式能力測驗，該活動目前未開放重複參加。</div>
+
+          <div id="auraGameBox" class="aura-stage">
+            <div id="auraCaptureArea" class="aura-cup-card">
+              <p class="aura-instruction">按住下方杯面不要放開，倒數完成後會顯示結果。</p>
+              <div id="auraCountdown" class="aura-countdown">3</div>
+              <div id="auraHoldArea" class="aura-cup" aria-label="按住杯面開始測驗" role="button" tabindex="0">
+                <div class="aura-leaf"></div>
+              </div>
+              <div id="auraResultCard" class="aura-result-card hidden" style="margin: 18px auto 0;">
+                <h3 id="auraResultTitle">你的結果是：強化系</h3>
+                <p id="auraResultDesc">完成測驗後，結果會顯示在這裡。</p>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="auraCompleteBtn" class="btn btn-primary hidden" type="button">離開活動並領取 +5 點</button>
+              <button id="auraScreenshotBtn" class="btn btn-secondary hidden" type="button">截圖保存結果</button>
+              <button id="auraResetBtn" class="btn btn-secondary hidden" type="button">重新測一次結果</button>
+            </div>
+          </div>
+        </div>
+
         <div id="recordsTab" class="tab-panel hidden">
           <div class="section-title">
             <div>
@@ -1033,7 +1194,8 @@
 
     const activityStatusMap = {
       survey: "問卷",
-      spin_game: "小遊戲"
+      spin_game: "轉盤小遊戲",
+      aura_cup_game: "水見式能力測驗"
     };
 
     function getVipLevelByPoints(points = 0) {
@@ -1068,6 +1230,17 @@
         desc: "挑戰轉盤遊戲，可獲得 5 點積分與折扣碼。",
         requiredVip: "VIP1",
         tab: "game",
+        points: 5,
+        repeatable: false
+      },
+      {
+        id: "aura-cup-game",
+        activityType: "aura_cup_game",
+        icon: "🍃",
+        title: "水見式能力測驗",
+        desc: "按住杯面 3 秒，測出你的專屬能力系別。完成後可獲得 5 點積分。",
+        requiredVip: "VIP1",
+        tab: "aura",
         points: 5,
         repeatable: false
       },
@@ -1109,6 +1282,43 @@
     let currentPointLogs = [];
     let currentAdminData = null;
     let wheelDeg = 0;
+    let auraTimer = null;
+    let auraCounter = 3;
+    let auraCurrentResult = null;
+    let auraCompleted = false;
+
+    const auraResults = [
+      {
+        key: "enhancement",
+        title: "強化系",
+        desc: "你是行動力強、直覺明確的類型。越投入，越能把自己的優勢放大。"
+      },
+      {
+        key: "emission",
+        title: "放出系",
+        desc: "你擅長把想法傳遞出去，適合主動開啟話題、分享觀點與帶動現場氣氛。"
+      },
+      {
+        key: "manipulation",
+        title: "操作系",
+        desc: "你重視節奏與策略，善於掌握流程、安排資源，讓事情照計畫推進。"
+      },
+      {
+        key: "transmutation",
+        title: "變化系",
+        desc: "你反應靈活、創意充足，能把平凡情境變成有趣的體驗。"
+      },
+      {
+        key: "specialist",
+        title: "特質系",
+        desc: "你有獨特的觀察角度與個人魅力，常常能做出意料之外的選擇。"
+      },
+      {
+        key: "art",
+        title: "美術系",
+        desc: "你對視覺、風格與氛圍特別敏銳，適合把想法轉化成有記憶點的畫面。"
+      }
+    ];
 
     function getEmailKey(email) {
       return String(email || "").trim().toLowerCase();
@@ -1394,7 +1604,7 @@
       const repeatable = activity.repeatable === true;
       const locked = !allowed;
       const disabled = locked || (completed && !repeatable) || activity.informationalOnly;
-      let statusText = allowed ? "可參加" : "尚未解鎖";
+      let statusText = allowed ? "可參加" : "資格不符";
       let statusClass = allowed ? "" : "locked-tag";
       if (completed && !repeatable) {
         statusText = "已參加";
@@ -1405,7 +1615,7 @@
         statusClass = "locked-tag";
       }
 
-      const buttonText = activity.informationalOnly ? "資格不符" : completed && !repeatable ? "已參加" : locked ? "權限不足" : "開始";
+      const buttonText = activity.informationalOnly ? "資格不符" : completed && !repeatable ? "已參加" : locked ? "資格不符" : "開始";
 
       return `
         <article class="activity-row ${locked ? "locked" : ""} ${completed ? "completed" : ""}">
@@ -1432,13 +1642,18 @@
     function renderParticipationState() {
       const surveyActivity = activities.find(a => a.activityType === "survey");
       const gameActivity = activities.find(a => a.activityType === "spin_game");
+      const auraActivity = activities.find(a => a.activityType === "aura_cup_game");
       const surveyDone = surveyActivity && hasCompletedActivity("survey") && !surveyActivity.repeatable;
       const gameDone = gameActivity && hasCompletedActivity("spin_game") && !gameActivity.repeatable;
+      const auraDone = auraActivity && hasCompletedActivity("aura_cup_game") && !auraActivity.repeatable;
 
       $("#surveyLockedNotice").toggleClass("hidden", !surveyDone);
       $("#surveyForm").toggleClass("hidden", surveyDone);
       $("#gameLockedNotice").toggleClass("hidden", !gameDone);
       $("#gameBox").toggleClass("hidden", gameDone);
+      $("#auraLockedNotice").toggleClass("hidden", !auraDone);
+      $("#auraGameBox").toggleClass("hidden", auraDone);
+      if (auraDone) resetAuraGame();
     }
 
     function renderRewards() {
@@ -1634,6 +1849,96 @@
       $("#backendContent").html(content);
     }
 
+    function resetAuraGame() {
+      clearInterval(auraTimer);
+      auraTimer = null;
+      auraCounter = 3;
+      auraCurrentResult = null;
+      auraCompleted = false;
+      $("#auraHoldArea").removeClass("holding");
+      $("#auraCountdown").text("3");
+      $("#auraResultCard").addClass("hidden").removeClass("aura-result-enhancement aura-result-emission aura-result-manipulation aura-result-transmutation aura-result-specialist aura-result-art");
+      $("#auraResultTitle").text("你的結果是：");
+      $("#auraResultDesc").text("完成測驗後，結果會顯示在這裡。");
+      $("#auraCompleteBtn, #auraScreenshotBtn, #auraResetBtn").addClass("hidden");
+    }
+
+    function startAuraHold() {
+      const activity = activities.find(item => item.activityType === "aura_cup_game");
+      if (!canJoinActivity(activity) || auraTimer || auraCompleted) return;
+
+      auraCounter = 3;
+      $("#auraHoldArea").addClass("holding");
+      $("#auraCountdown").text(auraCounter);
+      auraTimer = setInterval(() => {
+        auraCounter -= 1;
+        $("#auraCountdown").text(auraCounter > 0 ? auraCounter : "結果");
+        if (auraCounter <= 0) {
+          finishAuraHold();
+        }
+      }, 1000);
+    }
+
+    function cancelAuraHold() {
+      if (!auraTimer || auraCompleted) return;
+      clearInterval(auraTimer);
+      auraTimer = null;
+      auraCounter = 3;
+      $("#auraHoldArea").removeClass("holding");
+      $("#auraCountdown").text("3");
+    }
+
+    function finishAuraHold() {
+      clearInterval(auraTimer);
+      auraTimer = null;
+      auraCompleted = true;
+      $("#auraHoldArea").removeClass("holding");
+      const result = auraResults[Math.floor(Math.random() * auraResults.length)];
+      auraCurrentResult = result;
+
+      $("#auraResultCard")
+        .removeClass("hidden aura-result-enhancement aura-result-emission aura-result-manipulation aura-result-transmutation aura-result-specialist aura-result-art")
+        .addClass(`aura-result-${result.key}`);
+      $("#auraResultTitle").text(`你的結果是：${result.title}`);
+      $("#auraResultDesc").text(result.desc);
+      $("#auraCompleteBtn, #auraScreenshotBtn, #auraResetBtn").removeClass("hidden");
+    }
+
+    async function completeAuraActivity() {
+      if (!currentUser || !currentProfile) {
+        alert("請先登入。");
+        return;
+      }
+
+      const activity = activities.find(item => item.activityType === "aura_cup_game");
+      if (!canJoinActivity(activity)) {
+        alert("你已參加過水見式能力測驗，或目前權限不足。");
+        renderParticipationState();
+        return;
+      }
+
+      if (!auraCurrentResult) {
+        alert("請先按住杯面完成測驗。");
+        return;
+      }
+
+      $("#auraCompleteBtn").prop("disabled", true).text("資料寫入中...");
+      try {
+        const pointResult = await addUserPoints(5, "完成水見式能力測驗");
+        await logActivity("aura_cup_game", "completed", {
+          result: auraCurrentResult.title,
+          resultKey: auraCurrentResult.key,
+          points: 5
+        });
+        await refreshCurrentData();
+        alert(`測驗完成！你的結果是 ${auraCurrentResult.title}，獲得 5 點積分，目前 ${pointResult.newVipLevel}，總積分 ${pointResult.newPoints} 點。`);
+        switchTab("activities");
+      } catch (error) {
+        alert(`活動完成失敗：${error.message}`);
+        $("#auraCompleteBtn").prop("disabled", false).text("離開活動並領取 +5 點");
+      }
+    }
+
     function showApp() {
       $("#landingView").addClass("hidden");
       $("#appView").removeClass("hidden");
@@ -1651,7 +1956,8 @@
       $(".tab-panel").addClass("hidden");
       $(`#${tab}Tab`).removeClass("hidden");
       if (tab === "records") renderRecords();
-      if (tab === "questionnaire" || tab === "game") renderParticipationState();
+      if (tab === "questionnaire" || tab === "game" || tab === "aura") renderParticipationState();
+      if (tab === "aura") resetAuraGame();
     }
 
     async function renderSignedIn(user) {
@@ -1814,6 +2120,54 @@
           $("#spinBtn").prop("disabled", false).text("開始轉盤");
         }
       }, 1700);
+    });
+
+    $("#auraHoldArea")
+      .on("mousedown touchstart", function (event) {
+        event.preventDefault();
+        startAuraHold();
+      })
+      .on("mouseup mouseleave touchend touchcancel", function (event) {
+        event.preventDefault();
+        cancelAuraHold();
+      })
+      .on("keydown", function (event) {
+        if (event.key === " " || event.key === "Enter") {
+          event.preventDefault();
+          startAuraHold();
+        }
+      })
+      .on("keyup", function (event) {
+        if (event.key === " " || event.key === "Enter") {
+          event.preventDefault();
+          cancelAuraHold();
+        }
+      });
+
+    $("#auraCompleteBtn").on("click", completeAuraActivity);
+
+    $("#auraResetBtn").on("click", function () {
+      resetAuraGame();
+    });
+
+    $("#auraScreenshotBtn").on("click", async function () {
+      if (!auraCurrentResult) {
+        alert("請先完成測驗再截圖。");
+        return;
+      }
+
+      try {
+        const canvas = await html2canvas(document.querySelector("#auraCaptureArea"), {
+          backgroundColor: "#0f172a",
+          scale: 2
+        });
+        const link = document.createElement("a");
+        link.download = `water-divination-${auraCurrentResult.key}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      } catch (error) {
+        alert("截圖功能暫時無法使用，請使用手機或電腦內建截圖功能保存結果。");
+      }
     });
 
     onAuthStateChanged(auth, async (user) => {
