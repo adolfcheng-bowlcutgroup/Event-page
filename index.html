@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VIP 活動會員中心 MVP</title>
+
+  <!-- jQuery：主要用於簡化 DOM 操作與事件綁定 -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --card: #ffffff;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --line: rgba(255, 255, 255, 0.12);
+      --primary: #f59e0b;
+      --primary-dark: #d97706;
+      --accent: #7c3aed;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+      --radius: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(124, 58, 237, 0.36), transparent 32%),
+        radial-gradient(circle at top right, rgba(245, 158, 11, 0.32), transparent 28%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 64px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      box-shadow: var(--shadow);
+    }
+
+    .nav-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.28);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      align-items: center;
+      gap: 28px;
+      padding: 54px 0 28px;
+    }
+
+    .hero-card,
+    .panel {
+      background: rgba(17, 24, 39, 0.82);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero-copy {
+      padding: 36px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #fde68a;
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    h1 {
+      font-size: clamp(34px, 5vw, 60px);
+      line-height: 1.04;
+      margin: 22px 0 16px;
+      letter-spacing: -0.055em;
+    }
+
+    .lead {
+      font-size: 18px;
+      line-height: 1.75;
+      color: #cbd5e1;
+      margin: 0 0 26px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 14px;
+      padding: 13px 18px;
+      font-weight: 800;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      color: #111827;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      box-shadow: 0 12px 28px rgba(245, 158, 11, 0.28);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #fcd34d, #f59e0b);
+    }
+
+    .btn-secondary {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--line);
+    }
+
+    .btn-danger {
+      color: white;
+      background: rgba(220, 38, 38, 0.88);
+    }
+
+    .preview-card {
+      padding: 24px;
+    }
+
+    .phone-frame {
+      background: #f8fafc;
+      color: #0f172a;
+      border-radius: 28px;
+      padding: 18px;
+      min-height: 500px;
+      box-shadow: inset 0 0 0 8px #020617;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #92400e;
+      background: #fef3c7;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .mini-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 16px;
+      margin-top: 14px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .mini-title {
+      font-weight: 900;
+      margin: 0 0 6px;
+    }
+
+    .mini-copy {
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 0.86fr 1.14fr;
+      gap: 22px;
+      margin-top: 24px;
+    }
+
+    .panel {
+      padding: 24px;
+    }
+
+    .profile-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .profile-name {
+      font-weight: 900;
+      font-size: 22px;
+      margin: 0 0 4px;
+    }
+
+    .profile-email {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0;
+      word-break: break-all;
+    }
+
+    .vip-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 900;
+      font-size: 13px;
+      color: #111827;
+      background: linear-gradient(135deg, #fde68a, #f59e0b);
+      margin: 6px 0 12px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .stat {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.03em;
+    }
+
+    .section-title p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .activity-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .activity-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      min-height: 210px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .activity-card.locked {
+      opacity: 0.54;
+    }
+
+    .activity-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      background: rgba(245, 158, 11, 0.14);
+      font-size: 24px;
+    }
+
+    .activity-card h3 {
+      margin: 12px 0 8px;
+      font-size: 19px;
+    }
+
+    .activity-card p {
+      margin: 0;
+      color: #cbd5e1;
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .tag {
+      color: #e0e7ff;
+      background: rgba(124, 58, 237, 0.24);
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      color: #cbd5e1;
+      font-weight: 800;
+      font-size: 14px;
+      display: grid;
+      gap: 7px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border-radius: 13px;
+      padding: 12px 13px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    select option {
+      color: #111827;
+    }
+
+    .checkbox-label {
+      display: flex;
+      grid-template-columns: auto 1fr;
+      align-items: flex-start;
+      gap: 10px;
+      line-height: 1.55;
+      color: #cbd5e1;
+      font-weight: 700;
+    }
+
+    .checkbox-label input {
+      width: auto;
+      margin-top: 4px;
+    }
+
+    .reward-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .reward-item {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .reward-item strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .reward-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: #fde68a;
+      font-size: 18px;
+      word-break: break-all;
+    }
+
+    .game-box {
+      text-align: center;
+      padding: 12px 0;
+    }
+
+    .wheel {
+      width: 210px;
+      height: 210px;
+      margin: 10px auto 20px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(#f59e0b 0 25%, #7c3aed 25% 50%, #22c55e 50% 75%, #ef4444 75% 100%);
+      border: 10px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 18px 36px rgba(0,0,0,0.3);
+      transition: transform 1.6s cubic-bezier(.16,.82,.27,1);
+    }
+
+    .wheel-inner {
+      width: 94px;
+      height: 94px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: #111827;
+      font-weight: 900;
+      font-size: 22px;
+    }
+
+    .notice {
+      border-radius: 16px;
+      padding: 14px;
+      margin-top: 14px;
+      color: #dbeafe;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 16px;
+      margin-top: 12px;
+    }
+
+    .admin-table th,
+    .admin-table td {
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      padding: 10px;
+      color: #cbd5e1;
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    .admin-table th {
+      color: #fff;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #111827;
+    }
+
+    @media (max-width: 880px) {
+      .hero,
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .activity-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        padding-top: 24px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .page {
+        width: min(100% - 22px, 1120px);
+      }
+
+      .hero-copy,
+      .panel,
+      .preview-card {
+        padding: 18px;
+      }
+
+      .nav {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .stat-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .phone-frame {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <header class="nav">
+      <div class="brand">
+        <div class="logo">🎟️</div>
+        <div>
+          <div>VIP EVENT HUB</div>
+          <small style="color: var(--muted);">線下活動會員資料蒐集 MVP</small>
+        </div>
+      </div>
+
+      <div id="navUser" class="nav-user hidden">
+        <img id="navAvatar" class="avatar" alt="user avatar" />
+        <span id="navName"></span>
+        <button id="logoutBtn" class="btn btn-secondary" type="button">登出</button>
+      </div>
+    </header>
+
+    <!-- Landing -->
+    <main id="landingView" class="hero">
+      <section class="hero-card hero-copy">
+        <span class="eyebrow">現場限定｜Gmail 登入解鎖活動</span>
+        <h1>登入參加活動，領取你的專屬獎勵</h1>
+        <p class="lead">
+          使用 Gmail 登入後，即可依你的 VIP 權限參加問卷、小遊戲與限定抽獎。
+          完成活動後，系統會自動發放序號或折扣碼，並建立會員活動紀錄。
+        </p>
+        <div class="actions">
+          <button id="loginBtn" class="btn btn-primary" type="button">使用 Gmail 登入</button>
+          <button id="demoBtn" class="btn btn-secondary" type="button">先看 Demo</button>
+        </div>
+        <div class="notice">
+          MVP 支援：Google 登入、VIP 白名單判斷、問卷送序號、小遊戲送折扣、我的獎勵、簡易後台資料檢視。
+        </div>
+      </section>
+
+      <aside class="hero-card preview-card">
+        <div class="phone-frame">
+          <span class="status-pill">VIP Gold</span>
+          <h2 style="margin: 18px 0 8px;">會員活動中心</h2>
+          <p class="mini-copy">登入後會依 Gmail 判斷可參加活動。</p>
+          <div class="mini-card">
+            <p class="mini-title">填問卷送序號</p>
+            <p class="mini-copy">完成 1 分鐘問卷，獲得專屬活動序號。</p>
+          </div>
+          <div class="mini-card">
+            <p class="mini-title">玩小遊戲送折扣</p>
+            <p class="mini-copy">挑戰轉盤遊戲，VIP 可獲得更高折扣。</p>
+          </div>
+          <div class="mini-card">
+            <p class="mini-title">VIP 限定抽獎</p>
+            <p class="mini-copy">Gold 會員限定活動，用於差異化權益。</p>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- App -->
+    <main id="appView" class="dashboard hidden">
+      <aside class="panel">
+        <div class="profile-row">
+          <img id="profileAvatar" class="avatar" alt="profile avatar" style="width: 58px; height: 58px;" />
+          <div>
+            <h2 id="profileName" class="profile-name">Guest</h2>
+            <p id="profileEmail" class="profile-email">guest@example.com</p>
+          </div>
+        </div>
+
+        <div id="vipBadge" class="vip-badge">VIP Normal</div>
+        <p style="color: var(--muted); line-height: 1.7; margin-top: 0;">
+          系統會根據你的 Gmail 帳號比對 VIP 白名單，決定可見活動與獎勵內容。
+        </p>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <strong id="availableCount">0</strong>
+            <span>可參加活動</span>
+          </div>
+          <div class="stat">
+            <strong id="rewardCount">0</strong>
+            <span>已領取獎勵</span>
+          </div>
+        </div>
+
+        <div class="reward-list" id="rewardList"></div>
+      </aside>
+
+      <section class="panel">
+        <div class="tabs">
+          <button class="btn btn-secondary tab-btn active" data-tab="activities" type="button">活動</button>
+          <button class="btn btn-secondary tab-btn" data-tab="questionnaire" type="button">問卷</button>
+          <button class="btn btn-secondary tab-btn" data-tab="game" type="button">小遊戲</button>
+          <button class="btn btn-secondary tab-btn" data-tab="admin" type="button">簡易後台</button>
+        </div>
+
+        <div id="activitiesTab" class="tab-panel">
+          <div class="section-title">
+            <div>
+              <h2>我的活動</h2>
+              <p>依 VIP 權限顯示可參加內容</p>
+            </div>
+          </div>
+          <div id="activityGrid" class="activity-grid"></div>
+        </div>
+
+        <div id="questionnaireTab" class="tab-panel hidden">
+          <div class="section-title">
+            <div>
+              <h2>填問卷送序號</h2>
+              <p>完成後會寫入 Firestore 並產生獎勵</p>
+            </div>
+          </div>
+
+          <form id="surveyForm" class="form-grid">
+            <label>
+              姓名 / 暱稱
+              <input id="fieldName" required placeholder="例如：王小明" />
+            </label>
+
+            <label>
+              手機號碼
+              <input id="fieldPhone" required placeholder="例如：0912345678" />
+            </label>
+
+            <label>
+              年齡區間
+              <select id="fieldAge" required>
+                <option value="">請選擇</option>
+                <option>18 以下</option>
+                <option>18-24</option>
+                <option>25-34</option>
+                <option>35-44</option>
+                <option>45 以上</option>
+              </select>
+            </label>
+
+            <label>
+              居住地區
+              <select id="fieldCity" required>
+                <option value="">請選擇</option>
+                <option>台北市</option>
+                <option>新北市</option>
+                <option>桃園市</option>
+                <option>台中市</option>
+                <option>台南市</option>
+                <option>高雄市</option>
+                <option>其他</option>
+              </select>
+            </label>
+
+            <label>
+              感興趣的活動 / 產品
+              <textarea id="fieldInterest" placeholder="例如：線下展覽、會員優惠、遊戲活動、限定商品"></textarea>
+            </label>
+
+            <label class="checkbox-label">
+              <input id="fieldConsent" type="checkbox" required />
+              <span>我同意接收活動通知、優惠資訊與後續行銷訊息。</span>
+            </label>
+
+            <button class="btn btn-primary" type="submit">送出問卷並領取序號</button>
+          </form>
+        </div>
+
+        <div id="gameTab" class="tab-panel hidden">
+          <div class="section-title">
+            <div>
+              <h2>玩小遊戲送折扣</h2>
+              <p>VIP 等級越高，獎勵越好</p>
+            </div>
+          </div>
+
+          <div class="game-box">
+            <div id="wheel" class="wheel">
+              <div class="wheel-inner">GO</div>
+            </div>
+            <button id="spinBtn" class="btn btn-primary" type="button">開始轉盤</button>
+            <p id="gameResult" style="color: var(--muted); line-height: 1.7;"></p>
+          </div>
+        </div>
+
+        <div id="adminTab" class="tab-panel hidden">
+          <div class="section-title">
+            <div>
+              <h2>簡易後台</h2>
+              <p>查看目前登入者、問卷與獎勵資料。正式版應加上管理員權限。</p>
+            </div>
+          </div>
+
+          <div class="notice">
+            MVP 提醒：這裡只是展示資料結構。正式上線時，後台必須做角色權限控管，避免一般會員讀取所有客戶資料。
+          </div>
+
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>類型</th>
+                <th>資料</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    // =====================================================
+    // 1) Firebase 設定：請換成自己的 Firebase 專案設定
+    // Firebase Console > Project settings > Your apps > Web app
+    // =====================================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgczU9stXCm4QWc2zh25SSjgMFdu7HGDs",
+      authDomain: "event-page-30aea.firebaseapp.com",
+      projectId: "event-page-30aea",
+      storageBucket: "event-page-30aea.firebasestorage.app",
+      messagingSenderId: "658004683036",
+      appId: "1:658004683036:web:3cb5e28403062009ac72d9",
+      measurementId: "G-G3G0KML7B8"
+    };
+
+    // 使用 Firebase modular SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAnalytics, isSupported as isAnalyticsSupported } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      addDoc,
+      collection,
+      serverTimestamp,
+      query,
+      where,
+      getDocs,
+      orderBy,
+      limit
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    let analytics = null;
+    isAnalyticsSupported().then((supported) => {
+      if (supported) {
+        analytics = getAnalytics(app);
+      }
+    });
+
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    // =====================================================
+    // 2) MVP 活動與 VIP 規則
+    // 正式版建議改由 Firestore campaigns collection 控制
+    // =====================================================
+    const vipRank = {
+      Normal: 1,
+      Silver: 2,
+      Gold: 3
+    };
+
+    const activities = [
+      {
+        id: "survey-serial",
+        icon: "📝",
+        title: "填問卷送序號",
+        desc: "完成 1 分鐘問卷，即可獲得專屬活動序號。",
+        requiredVip: "Normal",
+        tab: "questionnaire"
+      },
+      {
+        id: "spin-discount",
+        icon: "🎮",
+        title: "玩小遊戲送折扣",
+        desc: "挑戰轉盤遊戲，依 VIP 等級獲得不同折扣碼。",
+        requiredVip: "Normal",
+        tab: "game"
+      },
+      {
+        id: "vip-gold-draw",
+        icon: "👑",
+        title: "VIP Gold 限定抽獎",
+        desc: "Gold 會員可參加限定抽獎。MVP 先展示權限鎖定效果。",
+        requiredVip: "Gold",
+        tab: "activities"
+      },
+      {
+        id: "silver-fastpass",
+        icon: "⚡",
+        title: "Silver 以上快速通關",
+        desc: "Silver 以上會員可在線下活動兌換快速通關 QR Code。",
+        requiredVip: "Silver",
+        tab: "activities"
+      }
+    ];
+
+    // Demo 白名單：正式版請移到 Firestore vips/{emailKey}
+    const localVipWhitelist = {
+      "gold@example.com": "Gold",
+      "silver@example.com": "Silver"
+    };
+
+    let currentUser = null;
+    let currentProfile = null;
+    let currentRewards = [];
+    let wheelDeg = 0;
+
+    function getEmailKey(email) {
+      return String(email || "").trim().toLowerCase();
+    }
+
+    function getSourceEvent() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("source") || "unknown_offline_event";
+    }
+
+    function createCode(prefix) {
+      const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const time = Date.now().toString().slice(-4);
+      return `${prefix}-${random}-${time}`;
+    }
+
+    function canAccess(userVip, requiredVip) {
+      return vipRank[userVip] >= vipRank[requiredVip];
+    }
+
+    async function resolveVipLevel(user) {
+      const emailKey = getEmailKey(user.email);
+
+      // 1. 先查 Firestore VIP 白名單：vips/{email}
+      const vipRef = doc(db, "vips", emailKey);
+      const vipSnap = await getDoc(vipRef);
+      if (vipSnap.exists() && vipSnap.data().vipLevel) {
+        return vipSnap.data().vipLevel;
+      }
+
+      // 2. Demo fallback：本機假資料
+      return localVipWhitelist[emailKey] || "Normal";
+    }
+
+    async function upsertUserProfile(user) {
+      const emailKey = getEmailKey(user.email);
+      const vipLevel = await resolveVipLevel(user);
+
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      const baseProfile = {
+        uid: user.uid,
+        email: user.email,
+        emailKey,
+        displayName: user.displayName || "未命名會員",
+        photoURL: user.photoURL || "",
+        vipLevel,
+        sourceEvent: getSourceEvent(),
+        lastLoginAt: serverTimestamp()
+      };
+
+      if (userSnap.exists()) {
+        await setDoc(userRef, baseProfile, { merge: true });
+      } else {
+        await setDoc(userRef, {
+          ...baseProfile,
+          createdAt: serverTimestamp(),
+          marketingConsent: false
+        });
+      }
+
+      const freshSnap = await getDoc(userRef);
+      return freshSnap.data();
+    }
+
+    async function loadRewards(userId) {
+      const q = query(
+        collection(db, "rewards"),
+        where("userId", "==", userId),
+        orderBy("createdAt", "desc"),
+        limit(20)
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+
+    async function createReward({ type, title, code }) {
+      if (!currentUser || !currentProfile) return;
+
+      await addDoc(collection(db, "rewards"), {
+        userId: currentUser.uid,
+        email: currentUser.email,
+        vipLevel: currentProfile.vipLevel,
+        type,
+        title,
+        code,
+        status: "issued",
+        sourceEvent: getSourceEvent(),
+        createdAt: serverTimestamp()
+      });
+
+      currentRewards = await loadRewards(currentUser.uid);
+      renderRewards();
+      renderProfile();
+      renderAdminPreview();
+    }
+
+    function renderProfile() {
+      if (!currentProfile) return;
+      const avatar = currentProfile.photoURL || "https://placehold.co/120x120?text=VIP";
+
+      $("#navUser").removeClass("hidden");
+      $("#navAvatar, #profileAvatar").attr("src", avatar);
+      $("#navName").text(currentProfile.displayName);
+      $("#profileName").text(currentProfile.displayName);
+      $("#profileEmail").text(currentProfile.email);
+      $("#vipBadge").text(`VIP ${currentProfile.vipLevel}`);
+
+      const available = activities.filter(a => canAccess(currentProfile.vipLevel, a.requiredVip)).length;
+      $("#availableCount").text(available);
+      $("#rewardCount").text(currentRewards.length);
+    }
+
+    function renderActivities() {
+      if (!currentProfile) return;
+
+      const html = activities.map(activity => {
+        const allowed = canAccess(currentProfile.vipLevel, activity.requiredVip);
+        return `
+          <article class="activity-card ${allowed ? "" : "locked"}">
+            <div>
+              <div class="activity-icon">${activity.icon}</div>
+              <h3>${activity.title}</h3>
+              <p>${activity.desc}</p>
+              <div class="tag-row">
+                <span class="tag">需 ${activity.requiredVip}</span>
+                <span class="tag">${allowed ? "可參加" : "尚未解鎖"}</span>
+              </div>
+            </div>
+            <button
+              class="btn ${allowed ? "btn-primary" : "btn-secondary"} activity-start"
+              data-tab="${activity.tab}"
+              ${allowed ? "" : "disabled"}
+              type="button"
+            >${allowed ? "開始" : "權限不足"}</button>
+          </article>
+        `;
+      }).join("");
+
+      $("#activityGrid").html(html);
+    }
+
+    function renderRewards() {
+      if (!currentRewards.length) {
+        $("#rewardList").html(`
+          <div class="reward-item">
+            <strong>尚未領取獎勵</strong>
+            <div style="color: var(--muted); line-height: 1.6;">完成問卷或小遊戲後，獎勵會顯示在這裡。</div>
+          </div>
+        `);
+        return;
+      }
+
+      const html = currentRewards.map(reward => `
+        <div class="reward-item">
+          <strong>${reward.title || reward.type}</strong>
+          <div class="reward-code">${reward.code}</div>
+          <small style="color: var(--muted);">狀態：${reward.status || "issued"}</small>
+        </div>
+      `).join("");
+
+      $("#rewardList").html(html);
+    }
+
+    function renderAdminPreview() {
+      const rows = [
+        ["目前會員", JSON.stringify({
+          email: currentProfile?.email,
+          vipLevel: currentProfile?.vipLevel,
+          sourceEvent: currentProfile?.sourceEvent
+        }, null, 2)],
+        ["已領獎勵", JSON.stringify(currentRewards.map(r => ({ title: r.title, code: r.code, status: r.status })), null, 2)],
+        ["Firestore collections", "users、vips、surveys、rewards、activityLogs"]
+      ];
+
+      $("#adminTableBody").html(rows.map(row => `
+        <tr>
+          <td>${row[0]}</td>
+          <td><pre style="white-space: pre-wrap; margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;">${row[1]}</pre></td>
+        </tr>
+      `).join(""));
+    }
+
+    function showApp() {
+      $("#landingView").addClass("hidden");
+      $("#appView").removeClass("hidden");
+    }
+
+    function showLanding() {
+      $("#landingView").removeClass("hidden");
+      $("#appView").addClass("hidden");
+      $("#navUser").addClass("hidden");
+    }
+
+    function switchTab(tab) {
+      $(".tab-btn").removeClass("active");
+      $(`.tab-btn[data-tab="${tab}"]`).addClass("active");
+      $(".tab-panel").addClass("hidden");
+      $(`#${tab}Tab`).removeClass("hidden");
+    }
+
+    async function renderSignedIn(user) {
+      currentUser = user;
+      currentProfile = await upsertUserProfile(user);
+      currentRewards = await loadRewards(user.uid);
+
+      renderProfile();
+      renderActivities();
+      renderRewards();
+      renderAdminPreview();
+      showApp();
+    }
+
+    async function logActivity(activityType, status, extra = {}) {
+      if (!currentUser || !currentProfile) return;
+
+      await addDoc(collection(db, "activityLogs"), {
+        userId: currentUser.uid,
+        email: currentUser.email,
+        vipLevel: currentProfile.vipLevel,
+        activityType,
+        status,
+        sourceEvent: getSourceEvent(),
+        extra,
+        createdAt: serverTimestamp()
+      });
+    }
+
+    // =====================================================
+    // 3) Event handlers
+    // =====================================================
+    $("#loginBtn").on("click", async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        alert(`Google 登入失敗：${error.message}`);
+      }
+    });
+
+    $("#logoutBtn").on("click", async () => {
+      await signOut(auth);
+    });
+
+    $("#demoBtn").on("click", () => {
+      alert("請先登入 Google，才能測試完整資料寫入流程。Demo 帳號規則：gold@example.com 為 Gold、silver@example.com 為 Silver。正式版請用 Firestore vips 白名單。 ");
+    });
+
+    $(document).on("click", ".tab-btn", function () {
+      switchTab($(this).data("tab"));
+    });
+
+    $(document).on("click", ".activity-start", function () {
+      const tab = $(this).data("tab");
+      switchTab(tab);
+    });
+
+    $("#surveyForm").on("submit", async function (event) {
+      event.preventDefault();
+
+      if (!currentUser || !currentProfile) {
+        alert("請先登入。");
+        return;
+      }
+
+      const surveyData = {
+        userId: currentUser.uid,
+        email: currentUser.email,
+        vipLevel: currentProfile.vipLevel,
+        name: $("#fieldName").val().trim(),
+        phone: $("#fieldPhone").val().trim(),
+        ageRange: $("#fieldAge").val(),
+        city: $("#fieldCity").val(),
+        interest: $("#fieldInterest").val().trim(),
+        marketingConsent: $("#fieldConsent").is(":checked"),
+        sourceEvent: getSourceEvent(),
+        createdAt: serverTimestamp()
+      };
+
+      try {
+        await addDoc(collection(db, "surveys"), surveyData);
+        await setDoc(doc(db, "users", currentUser.uid), {
+          phone: surveyData.phone,
+          ageRange: surveyData.ageRange,
+          city: surveyData.city,
+          marketingConsent: surveyData.marketingConsent,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        const code = createCode("SERIAL");
+        await createReward({
+          type: "serial",
+          title: "問卷完成序號",
+          code
+        });
+        await logActivity("survey", "completed", { rewardCode: code });
+
+        alert(`問卷完成！你的序號是：${code}`);
+        this.reset();
+        switchTab("activities");
+      } catch (error) {
+        alert(`問卷送出失敗：${error.message}`);
+      }
+    });
+
+    $("#spinBtn").on("click", async function () {
+      if (!currentUser || !currentProfile) {
+        alert("請先登入。");
+        return;
+      }
+
+      $(this).prop("disabled", true).text("轉盤中...");
+      wheelDeg += 720 + Math.floor(Math.random() * 360);
+      $("#wheel").css("transform", `rotate(${wheelDeg}deg)`);
+
+      setTimeout(async () => {
+        let discount = "95OFF";
+        if (currentProfile.vipLevel === "Gold") discount = Math.random() > 0.35 ? "85OFF" : "90OFF";
+        if (currentProfile.vipLevel === "Silver") discount = Math.random() > 0.45 ? "90OFF" : "95OFF";
+        if (currentProfile.vipLevel === "Normal") discount = Math.random() > 0.75 ? "90OFF" : "95OFF";
+
+        const code = createCode(discount);
+        try {
+          await createReward({
+            type: "discount",
+            title: `小遊戲折扣碼 ${discount}`,
+            code
+          });
+          await logActivity("spin_game", "completed", { rewardCode: code, discount });
+          $("#gameResult").text(`恭喜獲得折扣碼：${code}`);
+        } catch (error) {
+          alert(`建立折扣碼失敗：${error.message}`);
+        } finally {
+          $("#spinBtn").prop("disabled", false).text("再玩一次");
+        }
+      }, 1700);
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          await renderSignedIn(user);
+        } catch (error) {
+          console.error(error);
+          alert(`載入會員資料失敗：${error.message}`);
+        }
+      } else {
+        currentUser = null;
+        currentProfile = null;
+        currentRewards = [];
+        showLanding();
+      }
+    });
+  </script>
+</body>
+</html>
