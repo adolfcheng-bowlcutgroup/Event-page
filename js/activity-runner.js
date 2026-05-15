@@ -179,16 +179,26 @@ function renderActivityCards(list) {
               type="button"
             >${buttonText}</button>
           </div>
+          <div class="activity-inline-detail hidden" data-inline-detail="${activity.id}"></div>
         </div>
       </article>
     `;
   }).join("");
 }
-
 export function bindActivityEvents() {
   $(document).on("click", "[data-toggle-activity]", function () {
     const id = $(this).data("toggle-activity");
-    $(`.activity-card[data-activity-id="${id}"]`).toggleClass("open");
+    const card = $(`.activity-card[data-activity-id="${id}"]`);
+    const wasOpen = card.hasClass("open");
+
+    $(".activity-card").not(card).removeClass("open active-card");
+    $(".activity-inline-detail").not(card.find(".activity-inline-detail")).addClass("hidden").empty();
+
+    card.toggleClass("open", !wasOpen);
+    if (wasOpen) {
+      card.removeClass("active-card");
+      card.find(".activity-inline-detail").addClass("hidden").empty();
+    }
   });
 
   $(document).on("click", "[data-start-activity]", function () {
@@ -196,11 +206,18 @@ export function bindActivityEvents() {
     const activity = activitiesRef.find(item => item.id === id);
     if (!activity) return;
 
-    const detail = getCurrentDetailContainer(activity);
+    const card = $(`.activity-card[data-activity-id="${id}"]`);
+    const inlineDetail = card.find(`[data-inline-detail="${id}"]`);
+
+    $(".activity-card").not(card).removeClass("open active-card");
+    $(".activity-inline-detail").not(inlineDetail).addClass("hidden").empty();
     $("#activityDetail, #vipActivityDetail").addClass("hidden").empty();
 
+    card.addClass("open active-card");
+    inlineDetail.removeClass("hidden").empty();
+
     if (activity.type === "benefit") {
-      detail.removeClass("hidden").html(`
+      inlineDetail.html(`
         <div class="section-title">
           <div>
             <h2>${activity.title}</h2>
@@ -216,15 +233,15 @@ export function bindActivityEvents() {
     }
 
     const context = buildActivityContext(activity);
-    detail.removeClass("hidden").empty();
-    activity.render(detail[0], context);
+    activity.render(inlineDetail[0], context);
   });
 
   $(document).on("click", "#closeActivityDetail, .close-activity-detail", function () {
+    $(".activity-inline-detail").addClass("hidden").empty();
+    $(".activity-card").removeClass("active-card");
     $("#activityDetail, #vipActivityDetail").addClass("hidden").empty();
   });
 }
-
 export function buildActivityContext(activity) {
   return {
     activity,
@@ -237,6 +254,8 @@ export function buildActivityContext(activity) {
       return result;
     },
     close() {
+      $(".activity-inline-detail").addClass("hidden").empty();
+      $(".activity-card").removeClass("active-card");
       $("#activityDetail, #vipActivityDetail").addClass("hidden").empty();
       renderActivities();
     }

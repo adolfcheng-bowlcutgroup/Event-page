@@ -40,7 +40,6 @@ function renderMemberBackend() {
       <p><strong>角色：</strong>${state.currentProfile.role}</p>
       <p><strong>VIP：</strong>${state.currentProfile.vipLevel}</p>
       <p><strong>積分：</strong>${state.currentProfile.points || 0}</p>
-      <p><strong>來源活動：</strong>${state.currentProfile.sourceEvent || ""}</p>
     </div>
   `);
 }
