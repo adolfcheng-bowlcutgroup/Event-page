@@ -875,6 +875,45 @@
       }
     }
 
+
+    .form-section {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .form-section h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .option-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .option-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: #cbd5e1;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .option-row input {
+      width: auto;
+      margin-top: 4px;
+    }
+
+    .subtle-note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      margin: -4px 0 8px;
+    }
+
     @media (max-width: 880px) {
       .hero,
       .dashboard {
@@ -1108,6 +1147,144 @@
           </div>
         </div>
 
+
+        <div id="hunterSurveyTab" class="tab-panel hidden">
+          <div class="section-title">
+            <div>
+              <h2>獵人實境解謎遊戲_滿意度調查(高雄站)</h2>
+              <p>填寫約 2-3 分鐘。完成後會寫入 Firestore、增加 10 點積分並建立活動紀錄。</p>
+            </div>
+          </div>
+
+          <div id="hunterSurveyLockedNotice" class="empty-state hidden">你已參加過「獵人實境解謎遊戲_滿意度調查(高雄站)」，該活動目前未開放重複參加。</div>
+
+          <form id="hunterSurveyForm" class="form-grid">
+            <section class="form-section">
+              <h3>基本資料</h3>
+              <label>
+                電子郵件 Email
+                <input id="hunterEmail" type="email" required placeholder="例如：user@gmail.com" />
+              </label>
+              <label>
+                手機號碼
+                <input id="hunterPhone" required placeholder="例如：0912345678" />
+              </label>
+              <label>
+                您的年齡區間？
+                <select id="hunterAge" required>
+                  <option value="">請選擇</option>
+                  <option>8 歲以下</option>
+                  <option>18-22 歲</option>
+                  <option>23-29 歲</option>
+                  <option>30-39 歲</option>
+                  <option>40 歲以上</option>
+                </select>
+              </label>
+              <label>
+                您是否有登入貪婪之島體驗遊戲？
+                <select id="hunterPlayedGame" required>
+                  <option value="">請選擇</option>
+                  <option value="有">有</option>
+                  <option value="沒有，只有逛商店區">沒有，只有逛商店區</option>
+                </select>
+              </label>
+            </section>
+
+            <section id="hunterGameExperienceSection" class="form-section">
+              <h3>遊戲體驗調查</h3>
+              <p class="subtle-note">若選擇「沒有，只有逛商店區」，此段可略過。</p>
+
+              <label>您是透過什麼管道得知本次活動？（可複選）</label>
+              <div class="option-grid" data-checkbox-group="hunterChannels">
+                <label class="option-row"><input type="checkbox" name="hunterChannels" value="獵人實境解謎官方 Instagram / Threads / Facebook" />獵人實境解謎官方 Instagram / Threads / Facebook</label>
+                <label class="option-row"><input type="checkbox" name="hunterChannels" value="KOL 推薦" />KOL 推薦</label>
+                <label class="option-row"><input type="checkbox" name="hunterChannels" value="朋友推薦" />朋友推薦</label>
+                <label class="option-row"><input type="checkbox" name="hunterChannels" value="網路廣告" />網路廣告</label>
+                <label class="option-row"><input type="checkbox" name="hunterChannels" value="路過看到就來玩了" />路過看到就來玩了</label>
+                <label class="option-row"><input type="checkbox" name="hunterChannels" value="動漫社團／論壇" />動漫社團／論壇</label>
+                <label>其他
+                  <input id="hunterChannelOther" placeholder="請填寫其他得知管道" />
+                </label>
+              </div>
+
+              <label>
+                您過去參與過多少次「實境解謎／密室逃脫／沉浸式互動」類型活動？
+                <select id="hunterExperienceCount">
+                  <option value="">請選擇</option>
+                  <option>從未參加過</option>
+                  <option>1-3 次</option>
+                  <option>4-10 次</option>
+                  <option>10 次以上</option>
+                </select>
+              </label>
+
+              <label>您此次參與活動時，印象最深刻的是什麼？（最多選 2 項）</label>
+              <div class="option-grid" data-checkbox-group="hunterImpressions" data-max="2">
+                <label class="option-row"><input type="checkbox" name="hunterImpressions" value="IP／角色劇情還原度" />IP／角色劇情還原度</label>
+                <label class="option-row"><input type="checkbox" name="hunterImpressions" value="沉浸式互動體驗" />沉浸式互動體驗</label>
+                <label class="option-row"><input type="checkbox" name="hunterImpressions" value="與朋友一起遊玩" />與朋友一起遊玩</label>
+                <label class="option-row"><input type="checkbox" name="hunterImpressions" value="拍照打卡體驗" />拍照打卡體驗</label>
+                <label class="option-row"><input type="checkbox" name="hunterImpressions" value="限定周邊商品" />限定周邊商品</label>
+                <label class="option-row"><input type="checkbox" name="hunterImpressions" value="解謎／遊戲挑戰性" />解謎／遊戲挑戰性</label>
+              </div>
+
+              <label>若未來有類似活動，您最有可能再次參加的原因是？（最多選 2 項）</label>
+              <div class="option-grid" data-checkbox-group="hunterRevisitReasons" data-max="2">
+                <label class="option-row"><input type="checkbox" name="hunterRevisitReasons" value="喜歡這個 IP" />喜歡這個 IP</label>
+                <label class="option-row"><input type="checkbox" name="hunterRevisitReasons" value="喜歡沉浸式體驗" />喜歡沉浸式體驗</label>
+                <label class="option-row"><input type="checkbox" name="hunterRevisitReasons" value="想購買限定商品" />想購買限定商品</label>
+                <label class="option-row"><input type="checkbox" name="hunterRevisitReasons" value="想與朋友一起參加" />想與朋友一起參加</label>
+                <label class="option-row"><input type="checkbox" name="hunterRevisitReasons" value="喜歡拍照／場景" />喜歡拍照／場景</label>
+                <label class="option-row"><input type="checkbox" name="hunterRevisitReasons" value="喜歡實境解謎玩法" />喜歡實境解謎玩法</label>
+              </div>
+            </section>
+
+            <section class="form-section">
+              <h3>玩家行為調查</h3>
+              <label>
+                若您此次有購買周邊商品，您的消費金額約為？
+                <select id="hunterSpend" required>
+                  <option value="">請選擇</option>
+                  <option>未購買周邊商品</option>
+                  <option>300 元以下</option>
+                  <option>301-800 元</option>
+                  <option>801-1500 元</option>
+                  <option>1501-2000 元</option>
+                  <option>2000 元以上</option>
+                </select>
+              </label>
+
+              <label>若未來推出更多動漫 IP 快閃店，您最有興趣購買的周邊類型是？（可複選）</label>
+              <div class="option-grid" data-checkbox-group="hunterMerchTypes">
+                <label class="option-row"><input type="checkbox" name="hunterMerchTypes" value="隨機盲抽商品（盲盒、小卡、扭蛋）" />隨機盲抽商品（盲盒、小卡、扭蛋）</label>
+                <label class="option-row"><input type="checkbox" name="hunterMerchTypes" value="小型收藏品（徽章、吊飾、貼紙）" />小型收藏品（徽章、吊飾、貼紙）</label>
+                <label class="option-row"><input type="checkbox" name="hunterMerchTypes" value="中高單價收藏品（立牌、模型、公仔）" />中高單價收藏品（立牌、模型、公仔）</label>
+                <label class="option-row"><input type="checkbox" name="hunterMerchTypes" value="實用型商品（服飾、包袋、文具）" />實用型商品（服飾、包袋、文具）</label>
+                <label class="option-row"><input type="checkbox" name="hunterMerchTypes" value="絨毛娃娃／動畫或漫畫中的道具還原商品" />絨毛娃娃／動畫或漫畫中的道具還原商品</label>
+              </div>
+
+              <label>
+                您最希望未來能合作的動漫／遊戲 IP 是？【非必填】
+                <input id="hunterFutureIp" placeholder="例如：作品名稱或角色名稱" />
+              </label>
+
+              <label>您玩過西瓜皮育樂主辦的哪一檔活動／展覽？</label>
+              <div class="option-grid" data-checkbox-group="hunterPastBowlcutEvents">
+                <label class="option-row"><input type="checkbox" name="hunterPastBowlcutEvents" value="實境解謎《獵人實境解謎遊戲-貪婪之島》" />實境解謎《獵人實境解謎遊戲-貪婪之島》</label>
+                <label class="option-row"><input type="checkbox" name="hunterPastBowlcutEvents" value="沉浸式互動體驗《幻隱光靈》" />沉浸式互動體驗《幻隱光靈》</label>
+                <label class="option-row"><input type="checkbox" name="hunterPastBowlcutEvents" value="靜態特展《Lycoris Recoil 莉可麗絲展～seize the day～》" />靜態特展《Lycoris Recoil 莉可麗絲展～seize the day～》</label>
+              </div>
+
+              <label>
+                如果有任何想建議或改善的地方，歡迎留下您的意見。【非必填】
+                <textarea id="hunterSuggestion" placeholder="請留下您的建議或想法"></textarea>
+              </label>
+            </section>
+
+            <button id="hunterSurveySubmitBtn" class="btn btn-primary" type="submit">送出滿意度調查並領取 +10 點</button>
+          </form>
+        </div>
+
         <div id="recordsTab" class="tab-panel hidden">
           <div class="section-title">
             <div>
@@ -1200,6 +1377,7 @@
 
     const activityStatusMap = {
       survey: "問卷",
+      hunter_satisfaction_kaohsiung: "獵人實境解謎遊戲_滿意度調查(高雄站)",
       spin_game: "轉盤小遊戲",
       aura_cup_game: "水見式能力測驗"
     };
@@ -1225,6 +1403,17 @@
         desc: "完成 1 分鐘問卷，可獲得 10 點積分與專屬活動序號。",
         requiredVip: "VIP1",
         tab: "questionnaire",
+        points: 10,
+        repeatable: false
+      },
+      {
+        id: "hunter-satisfaction-kaohsiung",
+        activityType: "hunter_satisfaction_kaohsiung",
+        icon: "🗺️",
+        title: "獵人實境解謎遊戲_滿意度調查(高雄站)",
+        desc: "針對《獵人實境解謎遊戲－貪婪之島篇》高雄站體驗與周邊消費回饋，填寫約 2-3 分鐘，可獲得 10 點積分。",
+        requiredVip: "VIP1",
+        tab: "hunterSurvey",
         points: 10,
         repeatable: false
       },
@@ -1667,14 +1856,20 @@
 
     function renderParticipationState() {
       const surveyActivity = activities.find(a => a.activityType === "survey");
+      const hunterSurveyActivity = activities.find(a => a.activityType === "hunter_satisfaction_kaohsiung");
       const gameActivity = activities.find(a => a.activityType === "spin_game");
       const auraActivity = activities.find(a => a.activityType === "aura_cup_game");
       const surveyDone = surveyActivity && hasCompletedActivity("survey") && !surveyActivity.repeatable;
+      const hunterSurveyDone = hunterSurveyActivity && hasCompletedActivity("hunter_satisfaction_kaohsiung") && !hunterSurveyActivity.repeatable;
       const gameDone = gameActivity && hasCompletedActivity("spin_game") && !gameActivity.repeatable;
       const auraDone = auraActivity && hasCompletedActivity("aura_cup_game") && !auraActivity.repeatable;
 
       $("#surveyLockedNotice").toggleClass("hidden", !surveyDone);
       $("#surveyForm").toggleClass("hidden", surveyDone);
+      $("#hunterSurveyLockedNotice").toggleClass("hidden", !hunterSurveyDone);
+      $("#hunterSurveyForm").toggleClass("hidden", hunterSurveyDone);
+      $("#hunterEmail").val(currentProfile?.email || "");
+      if (currentProfile?.phone && !$("#hunterPhone").val()) $("#hunterPhone").val(currentProfile.phone);
       $("#gameLockedNotice").toggleClass("hidden", !gameDone);
       $("#gameBox").toggleClass("hidden", gameDone);
       $("#auraLockedNotice").toggleClass("hidden", !auraDone);
@@ -1982,7 +2177,7 @@
       $(".tab-panel").addClass("hidden");
       $(`#${tab}Tab`).removeClass("hidden");
       if (tab === "records") renderRecords();
-      if (tab === "questionnaire" || tab === "game" || tab === "aura") renderParticipationState();
+      if (tab === "questionnaire" || tab === "hunterSurvey" || tab === "game" || tab === "aura") renderParticipationState();
       if (tab === "aura") resetAuraGame();
     }
 
@@ -1996,6 +2191,24 @@
       renderParticipationState();
       renderRecords();
       showApp();
+    }
+
+
+    function getCheckedValues(name) {
+      return $(`input[name="${name}"]:checked`).map(function () {
+        return $(this).val();
+      }).get();
+    }
+
+    function enforceCheckboxMax(input) {
+      const group = $(input).closest("[data-checkbox-group]");
+      const max = Number(group.data("max") || 0);
+      if (!max) return;
+      const checked = group.find('input[type="checkbox"]:checked');
+      if (checked.length > max) {
+        input.checked = false;
+        alert(`此題最多選 ${max} 項。`);
+      }
     }
 
     // =====================================================
@@ -2034,6 +2247,15 @@
 
       if (!canJoinActivity(activity)) return;
       switchTab(activity.tab);
+    });
+
+    $(document).on("change", '[data-checkbox-group][data-max] input[type="checkbox"]', function () {
+      enforceCheckboxMax(this);
+    });
+
+    $("#hunterPlayedGame").on("change", function () {
+      const noGame = $(this).val() === "沒有，只有逛商店區";
+      $("#hunterGameExperienceSection").toggleClass("hidden", noGame);
     });
 
     $("#reloadRecordsBtn").on("click", async () => {
@@ -2116,6 +2338,75 @@
         alert(`問卷送出失敗：${error.message}`);
       } finally {
         $("#surveySubmitBtn").prop("disabled", false).text("送出問卷並領取序號");
+      }
+    });
+
+
+    $("#hunterSurveyForm").on("submit", async function (event) {
+      event.preventDefault();
+      if (!currentUser || !currentProfile) {
+        alert("請先登入。");
+        return;
+      }
+
+      const activity = activities.find(item => item.activityType === "hunter_satisfaction_kaohsiung");
+      if (!canJoinActivity(activity)) {
+        alert("你已參加過此滿意度調查，或目前權限不足。");
+        renderParticipationState();
+        return;
+      }
+
+      const playedGame = $("#hunterPlayedGame").val();
+      const skipGameQuestions = playedGame === "沒有，只有逛商店區";
+      const surveyData = {
+        surveyType: "hunter_satisfaction_kaohsiung",
+        surveyTitle: "獵人實境解謎遊戲_滿意度調查(高雄站)",
+        userId: currentUser.uid,
+        email: currentUser.email,
+        formEmail: $("#hunterEmail").val().trim(),
+        vipLevel: currentProfile.vipLevel,
+        phone: $("#hunterPhone").val().trim(),
+        ageRange: $("#hunterAge").val(),
+        playedGreedIslandGame: playedGame,
+        channels: skipGameQuestions ? [] : getCheckedValues("hunterChannels"),
+        channelOther: skipGameQuestions ? "" : $("#hunterChannelOther").val().trim(),
+        experienceCount: skipGameQuestions ? "" : $("#hunterExperienceCount").val(),
+        impressions: skipGameQuestions ? [] : getCheckedValues("hunterImpressions"),
+        revisitReasons: skipGameQuestions ? [] : getCheckedValues("hunterRevisitReasons"),
+        merchandiseSpend: $("#hunterSpend").val(),
+        interestedMerchTypes: getCheckedValues("hunterMerchTypes"),
+        futureIp: $("#hunterFutureIp").val().trim(),
+        pastBowlcutEvents: getCheckedValues("hunterPastBowlcutEvents"),
+        suggestion: $("#hunterSuggestion").val().trim(),
+        sourceEvent: getSourceEvent(),
+        createdAt: serverTimestamp()
+      };
+
+      try {
+        $("#hunterSurveySubmitBtn").prop("disabled", true).text("送出中...");
+        await addDoc(collection(db, "surveys"), surveyData);
+        await setDoc(doc(db, "users", currentUser.uid), {
+          phone: surveyData.phone,
+          ageRange: surveyData.ageRange,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        const pointResult = await addUserPoints(10, "完成獵人高雄站滿意度調查");
+        await logActivity("hunter_satisfaction_kaohsiung", "completed", {
+          surveyTitle: surveyData.surveyTitle,
+          points: 10,
+          playedGreedIslandGame: playedGame
+        });
+        await refreshCurrentData();
+
+        alert(`滿意度調查完成！獲得 10 點積分，目前 ${pointResult.newVipLevel}，總積分 ${pointResult.newPoints} 點。`);
+        this.reset();
+        $("#hunterEmail").val(currentProfile?.email || "");
+        switchTab("activities");
+      } catch (error) {
+        alert(`滿意度調查送出失敗：${error.message}`);
+      } finally {
+        $("#hunterSurveySubmitBtn").prop("disabled", false).text("送出滿意度調查並領取 +10 點");
       }
     });
 
