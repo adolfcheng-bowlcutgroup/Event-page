@@ -109,3 +109,21 @@ admins/{管理員信箱小寫}
 - `userTags`
 
 資料量變大後，建議改用 Cloud Functions 預先彙整到 `campaignStats`、`dailyStats`、`vipStats`。
+
+## 新增活動：超能100！靈力控制挑戰
+
+新增檔案：
+
+```text
+activities/psychic-control-game/
+├── index.js
+└── style.css
+```
+
+活動規則：
+
+- VIP1 以上可參加
+- 15 秒內命中目標區 3 次即可通關
+- 通關 +10 點
+- 失敗不加點、不記為已參加，可重新挑戰
+- 通關後會寫入活動完成紀錄，活動顯示已參加

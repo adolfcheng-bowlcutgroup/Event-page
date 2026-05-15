@@ -1,5 +1,6 @@
 import { spinGameActivity } from "../activities/spin-game/index.js";
 import { auraGameActivity } from "../activities/aura-game/index.js";
+import { psychicControlGameActivity } from "../activities/psychic-control-game/index.js";
 import { hunterKaohsiungSurveyActivity } from "../activities/hunter-kaohsiung-survey/index.js";
 import { simpleSurveyActivity } from "./activity-runner.js";
 
@@ -7,6 +8,7 @@ export const activities = [
   simpleSurveyActivity,
   spinGameActivity,
   auraGameActivity,
+  psychicControlGameActivity,
   {
     id: "vip2-fastpass",
     type: "benefit",
